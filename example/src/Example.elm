@@ -1,5 +1,8 @@
+module Main (..) where
+
 import Autocomplete exposing (initWithClasses, initItem, update, view)
 import StartApp.Simple
+
 
 testData =
   [ initItem "0" "eggs"
@@ -8,13 +11,15 @@ testData =
   , initItem "3" "bread"
   ]
 
+
 initExampleClassListConfig =
-  { menu = [ ("autocomplete-menu-default", True) ]
-  , item = [ ("autocomplete-item-default", True) ]
-  , selectedItem = [ ("autocomplete-selected-item-default", True) ]
-  , list = [ ("autocomplete-list-default", True) ]
-  , input = [ ("autocomplete-input-default", True) ]
+  { menu = [ ( "autocomplete-menu-default", True ) ]
+  , item = [ ( "autocomplete-item-default", True ) ]
+  , selectedItem = [ ( "autocomplete-selected-item-default", True ) ]
+  , list = [ ( "autocomplete-list-default", True ) ]
+  , input = [ ( "autocomplete-input-default", True ) ]
   }
+
 
 main =
   StartApp.Simple.start

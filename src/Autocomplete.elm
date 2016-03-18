@@ -1,6 +1,4 @@
-module Autocomplete (Autocomplete, Item, ClassListConfig, Classes,
-                     init, initWithClasses, initItem,
-                     update, view) where
+module Autocomplete (Autocomplete, Item, ClassListConfig, Classes, init, initWithClasses, initItem, update, view) where
 
 {-| A customizable autocomplete component.
 
@@ -46,6 +44,7 @@ type alias Autocomplete =
   , classes : ClassListConfig
   }
 
+
 {-| A collection of class names attributed to each piece of the component.
 -}
 type alias ClassListConfig =
@@ -56,8 +55,12 @@ type alias ClassListConfig =
   , input : Classes
   }
 
-{-| Alias for the argument to an elm-html classList -}
-type alias Classes = List (String, Bool)
+
+{-| Alias for the argument to an elm-html classList
+-}
+type alias Classes =
+  List ( String, Bool )
+
 
 {-| A possible selection in the autocomplete.
 -}
@@ -65,6 +68,7 @@ type alias Item =
   { key : ID
   , text : Text
   }
+
 
 type alias ID =
   String
@@ -86,15 +90,20 @@ init items =
   , classes = ClassListConfig [] [] [] [] []
   }
 
-{-| Creates an Autocomplete with custom class names -}
+
+{-| Creates an Autocomplete with custom class names
+-}
 initWithClasses : List Item -> ClassListConfig -> Autocomplete
 initWithClasses items classListConfig =
   let
-      model = init items
+    model =
+      init items
   in
-      { model | classes = classListConfig }
+    { model | classes = classListConfig }
 
-{-| Creates an Autocomplete Item -}
+
+{-| Creates an Autocomplete Item
+-}
 initItem : ID -> Text -> Item
 initItem id text =
   { key = id
@@ -106,7 +115,9 @@ type Action
   = SetValue String
   | Complete
 
-{-| The quintessential Elm Architecture reducer. -}
+
+{-| The quintessential Elm Architecture reducer.
+-}
 update : Action -> Autocomplete -> Autocomplete
 update action model =
   case action of
@@ -148,7 +159,8 @@ viewInput address model =
 
 
 {-| The full Autocomplete view, with menu and input.
-    Needs a Signal.Address and Autocomplete (typical of the Elm Architecture). -}
+    Needs a Signal.Address and Autocomplete (typical of the Elm Architecture).
+-}
 view : Address Action -> Autocomplete -> Html
 view address model =
   div
@@ -160,33 +172,37 @@ view address model =
 
 viewItem : Autocomplete -> Item -> Html
 viewItem model item =
-  li [ id item.key
-     , classList model.classes.item
-     ]
-     [ text item.text ]
+  li
+    [ id item.key
+    , classList model.classes.item
+    ]
+    [ text item.text ]
 
 
 viewSelectedItem : Autocomplete -> Item -> Html
 viewSelectedItem model item =
-  li [ id item.key
-     , classList (List.append model.classes.item model.classes.selectedItem)
-     ]
-     [ text item.text ]
+  li
+    [ id item.key
+    , classList (List.append model.classes.item model.classes.selectedItem)
+    ]
+    [ text item.text ]
 
 
 viewMenu : Autocomplete -> Html
 viewMenu model =
   let
-      getItemView index item =
-        if index == model.selectedItemIndex then
-          viewSelectedItem model item
-        else
-          viewItem model item
+    getItemView index item =
+      if index == model.selectedItemIndex then
+        viewSelectedItem model item
+      else
+        viewItem model item
   in
-      div [ classList model.classes.menu ]
-          [ ul [ classList model.classes.list ]
-            (List.indexedMap getItemView model.filteredItems)
-          ]
+    div
+      [ classList model.classes.menu ]
+      [ ul
+          [ classList model.classes.list ]
+          (List.indexedMap getItemView model.filteredItems)
+      ]
 
 
 onTab : Signal.Address a -> a -> Attribute
