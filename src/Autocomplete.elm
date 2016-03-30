@@ -58,7 +58,6 @@ type alias GetItemsTask =
 type alias Index =
   Int
 
-
 {-| A collection of class names attributed to each piece of the component.
 -}
 type alias ClassListConfig =
@@ -140,6 +139,12 @@ initItem id text' =
 -}
 initItemCustomHtml : ID -> Text -> Html -> Item
 initItemCustomHtml id text' html =
+
+
+{-| Creates an Autocomplete Item
+-}
+initItem : ID -> Text -> Item
+initItem id text =
   { key = id
   , text = text'
   , html = html
@@ -329,3 +334,4 @@ getMoreItems value model =
   model.getItemsTask value model.selectedItemIndex
     |> Task.map UpdateItems
     |> Effects.task
+
