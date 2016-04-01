@@ -19,7 +19,7 @@ new: clean-build all
 
 $(ELM_BUILD): elm
 
-plain:
+simple:
 	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/Example.elm
 
 remote:
