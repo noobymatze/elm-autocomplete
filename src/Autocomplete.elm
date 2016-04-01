@@ -1,4 +1,4 @@
-module Autocomplete (Autocomplete, Item, ClassListConfig, ClassList, init, initWithClasses, initItem, initItemCustomHtml, Action, update, view) where
+module Autocomplete (Autocomplete, Item, ClassListConfig, ClassList, init, initWithClasses, initItem, initItemCustomHtml, customizeNoMatches, customizeLoading, Action, update, view) where
 
 {-| A customizable autocomplete component.
 
@@ -14,7 +14,7 @@ and is also styled via css classes.
 @docs Autocomplete, Item, ClassListConfig, ClassList
 
 # Creating an Autocomplete
-@docs init, initWithClasses, initItem, initItemCustomHtml, customizeNoMatches
+@docs init, initWithClasses, initItem, initItemCustomHtml, customizeNoMatches, customizeLoading
 
 # Update
 @docs Action, update
@@ -51,6 +51,9 @@ type alias Autocomplete =
   , selectedItemIndex : Index
   , classes : Maybe ClassListConfig
   , noMatchesDisplay : Html
+  , loadingDisplay : Html
+  , showLoading : Bool
+  , showMenu : Bool
   }
 
 
@@ -105,6 +108,9 @@ init items maxListSize getItemsTask =
     , selectedItemIndex = 0
     , classes = Nothing
     , noMatchesDisplay = p [] [ text "No Matches" ]
+    , loadingDisplay = p [] [ text "..." ]
+    , showLoading = False
+    , showMenu = False
     }
   , Effects.none
   )
@@ -124,6 +130,9 @@ initWithClasses items maxListSize getItemsTask classListConfig =
     , selectedItemIndex = 0
     , classes = Just classListConfig
     , noMatchesDisplay = p [] [ text "No Matches" ]
+    , loadingDisplay = p [] [ text "..." ]
+    , showLoading = False
+    , showMenu = False
     }
   , Effects.none
   )
@@ -131,9 +140,24 @@ initWithClasses items maxListSize getItemsTask classListConfig =
 
 {-| Add some custom HTML to display when there are no matches
 -}
-customizeNoMatches : Html -> Autocomplete -> Autocomplete
-customizeNoMatches noMatchesHtml model =
-  { model | noMatchesDisplay = noMatchesHtml }
+customizeNoMatches : Html -> ( Autocomplete, Effects Action ) -> ( Autocomplete, Effects Action )
+customizeNoMatches noMatchesHtml tup =
+  let
+    model =
+      fst tup
+  in
+    ( { model | noMatchesDisplay = noMatchesHtml }, snd tup )
+
+
+{-| Add some custom HTML to display when on the initial load
+-}
+customizeLoading : Html -> ( Autocomplete, Effects Action ) -> ( Autocomplete, Effects Action )
+customizeLoading loadingHtml tup =
+  let
+    model =
+      fst tup
+  in
+    ( { model | loadingDisplay = loadingHtml }, snd tup )
 
 
 {-| Creates an Autocomplete Item
@@ -175,6 +199,7 @@ type Action
   | UpdateItems (List Item)
   | Complete
   | ChangeSelection Int
+  | ShowMenu Bool
 
 
 {-| The quintessential Elm Architecture reducer.
@@ -194,6 +219,7 @@ update action model =
           , filteredItems =
               List.filter (\item -> model.filterFn item model.value) model.items
                 |> List.sortWith model.compareFn
+          , showLoading = False
         }
       , Effects.none
       )
@@ -201,7 +227,7 @@ update action model =
     Complete ->
       case (getSelectedItem model) of
         Just item ->
-          ( { model | value = item.text }, Effects.none )
+          ( { model | value = item.text, showMenu = False }, Effects.none )
 
         Nothing ->
           ( model, Effects.none )
@@ -214,6 +240,9 @@ update action model =
       in
         ( { model | selectedItemIndex = boundedNewIndex }, Effects.none )
 
+    ShowMenu bool ->
+      ( { model | showMenu = bool }, Effects.none )
+
 
 {-| The full Autocomplete view, with menu and input.
     Needs a Signal.Address and Autocomplete (typical of the Elm Architecture).
@@ -221,9 +250,13 @@ update action model =
 view : Signal.Address Action -> Autocomplete -> Html
 view address model =
   div
-    []
+    [ onBlur address (ShowMenu False) ]
     [ viewInput address model
-    , if List.isEmpty model.filteredItems then
+    , if not model.showMenu then
+        div [] []
+      else if model.showLoading then
+        model.loadingDisplay
+      else if List.isEmpty model.filteredItems then
         model.noMatchesDisplay
       else
         viewMenu address model
@@ -251,6 +284,7 @@ viewInput address model =
       [ type' "text"
       , on "input" targetValue (Signal.message address << SetValue)
       , on "keydown" keyCode (\code -> Signal.message address (handleKeyDown code))
+      , onFocus address (ShowMenu True)
       , value model.value
       , classList (getStyling model.classes Styling.Input).classes'
       , (getStyling model.classes Styling.Input).inlineStyle
@@ -340,6 +374,7 @@ updateInputValue text model =
         , filteredItems =
             List.filter (\item -> model.filterFn item text) model.items
               |> List.sortWith model.compareFn
+        , showLoading = True
       }
     , getMoreItems text model
     )

@@ -203,7 +203,7 @@ view address model =
     , if List.isEmpty model.filteredItems then
         model.noMatchesDisplay
       else
-        viewMenu model
+        viewMenu address model
     ]
 
 
@@ -235,12 +235,13 @@ viewInput address model =
       []
 
 
-viewItem : Autocomplete -> Item -> Html
-viewItem model item =
+viewItem : Signal.Address Action -> Autocomplete -> Item -> Index -> Html
+viewItem address model item index =
   li
     [ id item.key
     , classList (getStyling model.classes Styling.Item).classes'
     , (getStyling model.classes Styling.Item).inlineStyle
+    , onMouseEnter address (ChangeSelection index)
     ]
     [ text item.text ]
 
@@ -248,30 +249,29 @@ viewItem model item =
 viewSelectedItem : Autocomplete -> Item -> Html
 viewSelectedItem model item =
   li
-    [ id item.key
-    , classList (getStyling model.classes Styling.SelectedItem).classes'
+    [ classList (getStyling model.classes Styling.SelectedItem).classes'
     , (getStyling model.classes Styling.SelectedItem).inlineStyle
     ]
     [ text item.text ]
 
 
-viewMenu : Autocomplete -> Html
-viewMenu model =
+viewMenu : Signal.Address Action -> Autocomplete -> Html
+viewMenu address model =
   div
     [ classList (getStyling model.classes Styling.Menu).classes'
     , (getStyling model.classes Styling.Menu).inlineStyle
     ]
-    [ viewList model ]
+    [ viewList address model ]
 
 
-viewList : Autocomplete -> Html
-viewList model =
+viewList : Signal.Address Action -> Autocomplete -> Html
+viewList address model =
   let
     getItemView index item =
       if index == model.selectedItemIndex then
         viewSelectedItem model item
       else
-        viewItem model item
+        viewItem address model item index
   in
     ul
       [ classList (getStyling model.classes Styling.List).classes'

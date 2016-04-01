@@ -1,7 +1,8 @@
 module Main (..) where
 
 import Effects exposing (Never)
-import Html
+import Html exposing (..)
+import Html.Attributes exposing (..)
 import Autocomplete exposing (initWithClasses, initItem, update, view)
 import StartApp
 import Task exposing (Task)
@@ -30,11 +31,7 @@ responseToItems maybeString =
 
 testData : List Autocomplete.Item
 testData =
-  [ initItem "0" "eggs"
-  , initItem "1" "milk"
-  , initItem "2" "butter"
-  , initItem "3" "bread"
-  ]
+  []
 
 
 initExampleClassListConfig : Autocomplete.ClassListConfig
@@ -52,10 +49,16 @@ getItemsTask value index =
   fetchMoreItems "https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt"
 
 
+initAutocomplete : ( Autocomplete.Autocomplete, Effects.Effects Autocomplete.Action )
+initAutocomplete =
+  initWithClasses testData 5 getItemsTask initExampleClassListConfig
+    |> Autocomplete.customizeLoading (img [ src "assets/loading.svg" ] [])
+
+
 app : StartApp.App Autocomplete.Autocomplete
 app =
   StartApp.start
-    { init = initWithClasses testData 10 getItemsTask initExampleClassListConfig
+    { init = initAutocomplete
     , update = update
     , view = view
     , inputs = []

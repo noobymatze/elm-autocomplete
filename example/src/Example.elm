@@ -7,10 +7,11 @@ import Html
 
 testData : List Item
 testData =
-  [ initItem "0" "eggs"
-  , initItem "1" "milk"
-  , initItem "2" "butter"
-  , initItem "3" "bread"
+  [ initItem "0" "elm"
+  , initItem "1" "makes"
+  , initItem "2" "coding"
+  , initItem "3" "life"
+  , initItem "4" "easy"
   ]
 
 
