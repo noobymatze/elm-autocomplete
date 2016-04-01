@@ -14,7 +14,7 @@ and is also styled via css classes.
 @docs Autocomplete, Item, ClassListConfig, ClassList
 
 # Creating an Autocomplete
-@docs init, initWithClasses, initItem
+@docs init, initWithClasses, initItem, customizeNoMatches
 
 # Update
 @docs Action, update
@@ -47,6 +47,7 @@ type alias Autocomplete =
   , compareFn : Item -> Item -> Order
   , selectedItemIndex : Index
   , classes : Maybe ClassListConfig
+  , noMatchesDisplay : Html
   }
 
 
@@ -94,6 +95,7 @@ init items maxSize =
   , compareFn = normalComparison
   , selectedItemIndex = 0
   , classes = Nothing
+  , noMatchesDisplay = p [] [ text "No Matches" ]
   }
 
 
@@ -106,6 +108,13 @@ initWithClasses items maxSize classListConfig =
       init items maxSize
   in
     { model | classes = Just classListConfig }
+
+
+{-| Add some custom HTML to display when there are no matches
+-}
+customizeNoMatches : Html -> Autocomplete -> Autocomplete
+customizeNoMatches noMatchesHtml model =
+  { model | noMatchesDisplay = noMatchesHtml }
 
 
 {-| Creates an Autocomplete Item
@@ -189,9 +198,12 @@ update action model =
 view : Address Action -> Autocomplete -> Html
 view address model =
   div
-    [ id "autocomplete" ]
+    []
     [ viewInput address model
-    , viewMenu model
+    , if List.isEmpty model.filteredItems then
+        model.noMatchesDisplay
+      else
+        viewMenu model
     ]
 
 

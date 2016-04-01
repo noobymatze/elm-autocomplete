@@ -14,7 +14,7 @@ and is also styled via css classes.
 @docs Autocomplete, Item, ClassListConfig, ClassList
 
 # Creating an Autocomplete
-@docs init, initWithClasses, initItem, initItemCustomHtml
+@docs init, initWithClasses, initItem, initItemCustomHtml, customizeNoMatches
 
 # Update
 @docs Action, update
@@ -50,6 +50,7 @@ type alias Autocomplete =
   , getItemsTask : GetItemsTask
   , selectedItemIndex : Index
   , classes : Maybe ClassListConfig
+  , noMatchesDisplay : Html
   }
 
 
@@ -103,6 +104,7 @@ init items maxListSize getItemsTask =
     , getItemsTask = getItemsTask
     , selectedItemIndex = 0
     , classes = Nothing
+    , noMatchesDisplay = p [] [ text "No Matches" ]
     }
   , Effects.none
   )
@@ -121,9 +123,17 @@ initWithClasses items maxListSize getItemsTask classListConfig =
     , getItemsTask = getItemsTask
     , selectedItemIndex = 0
     , classes = Just classListConfig
+    , noMatchesDisplay = p [] [ text "No Matches" ]
     }
   , Effects.none
   )
+
+
+{-| Add some custom HTML to display when there are no matches
+-}
+customizeNoMatches : Html -> Autocomplete -> Autocomplete
+customizeNoMatches noMatchesHtml model =
+  { model | noMatchesDisplay = noMatchesHtml }
 
 
 {-| Creates an Autocomplete Item
@@ -211,9 +221,12 @@ update action model =
 view : Signal.Address Action -> Autocomplete -> Html
 view address model =
   div
-    [ id "autocomplete" ]
+    []
     [ viewInput address model
-    , viewMenu address model
+    , if List.isEmpty model.filteredItems then
+        model.noMatchesDisplay
+      else
+        viewMenu address model
     ]
 
 
