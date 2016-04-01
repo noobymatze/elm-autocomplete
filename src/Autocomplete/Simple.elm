@@ -1,4 +1,4 @@
-module Autocomplete.Simple (Autocomplete, Item, ClassListConfig, ClassList, init, initWithClasses, initItem, update, view) where
+module Autocomplete.Simple (Autocomplete, Item, ClassListConfig, ClassList, init, initWithClasses, initItem, Action, update, view, getSelectedItemText) where
 
 {-| A customizable autocomplete component.
 
@@ -17,10 +17,13 @@ and is also styled via css classes.
 @docs init, initWithClasses, initItem
 
 # Update
-@docs update
+@docs Action, update
 
 # Views
 @docs view
+
+# Helpers
+@docs getSelectedItemText
 
 -}
 
@@ -29,7 +32,6 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Signal exposing (..)
 import String exposing (..)
-import Json.Decode as Json
 import Styling exposing (getStyling, ClassConfig, Classes)
 
 
@@ -39,11 +41,17 @@ import Styling exposing (getStyling, ClassConfig, Classes)
 type alias Autocomplete =
   { value : String
   , items : List Item
+  , maxListSize : Int
   , filteredItems : List Item
   , filterFn : Item -> String -> Bool
-  , selectedItemIndex : Int
+  , compareFn : Item -> Item -> Order
+  , selectedItemIndex : Index
   , classes : Maybe ClassListConfig
   }
+
+
+type alias Index =
+  Int
 
 
 {-| A collection of class names attributed to each piece of the component.
@@ -74,14 +82,16 @@ type alias Text =
   String
 
 
-{-| Creates an Autocomplete from a list of items with a default `String.contains` filter
+{-| Creates an Autocomplete from a list of items with a default `String.startsWith` filter
 -}
-init : List Item -> Autocomplete
-init items =
+init : List Item -> Int -> Autocomplete
+init items maxSize =
   { value = ""
   , items = items
+  , maxListSize = maxSize
   , filteredItems = items
-  , filterFn = (\item value -> String.contains value item.text)
+  , filterFn = (\item value -> String.startsWith value item.text)
+  , compareFn = normalComparison
   , selectedItemIndex = 0
   , classes = Nothing
   }
@@ -89,11 +99,11 @@ init items =
 
 {-| Creates an Autocomplete with custom class names
 -}
-initWithClasses : List Item -> ClassListConfig -> Autocomplete
-initWithClasses items classListConfig =
+initWithClasses : List Item -> Int -> ClassListConfig -> Autocomplete
+initWithClasses items maxSize classListConfig =
   let
     model =
-      init items
+      init items maxSize
   in
     { model | classes = Just classListConfig }
 
@@ -105,6 +115,19 @@ initItem id text =
   { key = id
   , text = text
   }
+
+
+normalComparison : Item -> Item -> Order
+normalComparison item1 item2 =
+  case compare item1.text item2.text of
+    LT ->
+      LT
+
+    EQ ->
+      EQ
+
+    GT ->
+      GT
 
 
 type Action
@@ -126,12 +149,16 @@ update action model =
       if value == "" then
         { model
           | value = value
-          , filteredItems = model.items
+          , filteredItems =
+              model.items
+                |> List.sortWith model.compareFn
         }
       else
         { model
           | value = value
-          , filteredItems = List.filter (\item -> model.filterFn item value) model.items
+          , filteredItems =
+              List.filter (\item -> model.filterFn item value) model.items
+                |> List.sortWith model.compareFn
         }
 
     Complete ->
@@ -241,18 +268,23 @@ viewList model =
       (List.indexedMap getItemView model.filteredItems)
 
 
-onTab : Signal.Address a -> a -> Attribute
-onTab address value =
-  onWithOptions
-    "keydown"
-    { defaultOptions | preventDefault = True }
-    (Json.customDecoder keyCode is9)
-    (\_ -> Signal.message address value)
+
+-- Helpers
 
 
-is9 : Int -> Result String ()
-is9 code =
-  if code == 9 then
-    Ok ()
-  else
-    Err "not the right key code"
+getSelectedItem : Autocomplete -> Maybe Item
+getSelectedItem model =
+  List.drop model.selectedItemIndex model.filteredItems
+    |> List.head
+
+
+{-| Get the text of the currently selected item
+-}
+getSelectedItemText : Autocomplete -> Text
+getSelectedItemText model =
+  case (getSelectedItem model) of
+    Just item ->
+      item.text
+
+    Nothing ->
+      model.value

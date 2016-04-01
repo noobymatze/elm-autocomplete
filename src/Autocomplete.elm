@@ -1,4 +1,4 @@
-module Autocomplete (Autocomplete, Item, ClassListConfig, ClassList, init, initWithClasses, initItem, initItemCustomHtml, update, view) where
+module Autocomplete (Autocomplete, Item, ClassListConfig, ClassList, init, initWithClasses, initItem, initItemCustomHtml, Action, update, view) where
 
 {-| A customizable autocomplete component.
 
@@ -17,10 +17,13 @@ and is also styled via css classes.
 @docs init, initWithClasses, initItem, initItemCustomHtml
 
 # Update
-@docs update
+@docs Action, update
 
 # Views
 @docs view
+
+# Helpers
+@docs getSelectedItemText
 
 -}
 
@@ -39,7 +42,6 @@ import Styling exposing (getStyling, ClassConfig, Classes)
 -}
 type alias Autocomplete =
   { value : String
-  , preview : String
   , items : List Item
   , maxListSize : Int
   , filteredItems : List Item
@@ -88,16 +90,15 @@ type alias Text =
   String
 
 
-{-| Creates an Autocomplete from a list of items with a default `String.contains` filter
+{-| Creates an Autocomplete from a list of items with a default `String.startsWith` filter
 -}
 init : List Item -> Int -> GetItemsTask -> ( Autocomplete, Effects Action )
 init items maxListSize getItemsTask =
   ( { value = ""
-    , preview = ""
     , items = items
     , maxListSize = maxListSize
     , filteredItems = items
-    , filterFn = (\item value -> String.contains value item.text)
+    , filterFn = (\item value -> String.startsWith value item.text)
     , compareFn = normalComparison
     , getItemsTask = getItemsTask
     , selectedItemIndex = 0
@@ -112,7 +113,6 @@ init items maxListSize getItemsTask =
 initWithClasses : List Item -> Int -> GetItemsTask -> ClassListConfig -> ( Autocomplete, Effects Action )
 initWithClasses items maxListSize getItemsTask classListConfig =
   ( { value = ""
-    , preview = ""
     , items = items
     , filteredItems = items
     , maxListSize = maxListSize
@@ -176,29 +176,14 @@ update action model =
       ( model, Effects.none )
 
     SetValue value ->
-      if value == "" then
-        ( { model
-            | value = value
-            , filteredItems =
-                model.items
-                  |> List.sortWith model.compareFn
-          }
-        , Effects.none
-        )
-      else
-        ( { model
-            | value = value
-            , filteredItems =
-                List.filter (\item -> model.filterFn item value) model.items
-                  |> List.sortWith model.compareFn
-          }
-        , getMoreItems value model
-        )
+      updateInputValue value model
 
     UpdateItems items ->
       ( { model
           | items = items
-          , filteredItems = List.filter (\item -> model.filterFn item model.value) model.items
+          , filteredItems =
+              List.filter (\item -> model.filterFn item model.value) model.items
+                |> List.sortWith model.compareFn
         }
       , Effects.none
       )
@@ -216,16 +201,8 @@ update action model =
         boundedNewIndex =
           Basics.max newIndex 0
             |> Basics.min ((List.length model.filteredItems) - 1)
-
-        selectedItemText =
-          case (getSelectedItem model) of
-            Just item ->
-              item.text
-
-            Nothing ->
-              model.value
       in
-        ( { model | selectedItemIndex = boundedNewIndex, preview = selectedItemText }, Effects.none )
+        ( { model | selectedItemIndex = Debug.log "newIndex" boundedNewIndex }, Effects.none )
 
 
 {-| The full Autocomplete view, with menu and input.
@@ -318,10 +295,8 @@ viewList address model =
       )
 
 
-getSelectedItem : Autocomplete -> Maybe Item
-getSelectedItem model =
-  List.drop model.selectedItemIndex model.filteredItems
-    |> List.head
+
+-- Effects
 
 
 getMoreItems : String -> Autocomplete -> Effects Action
@@ -329,3 +304,47 @@ getMoreItems value model =
   model.getItemsTask value model.selectedItemIndex
     |> Task.map UpdateItems
     |> Effects.task
+
+
+
+-- Helpers
+
+
+updateInputValue : Text -> Autocomplete -> ( Autocomplete, Effects Action )
+updateInputValue text model =
+  if text == "" then
+    ( { model
+        | value = value
+        , filteredItems =
+            model.items
+              |> List.sortWith model.compareFn
+      }
+    , Effects.none
+    )
+  else
+    ( { model
+        | value = value
+        , filteredItems =
+            List.filter (\item -> model.filterFn item text) model.items
+              |> List.sortWith model.compareFn
+      }
+    , getMoreItems text model
+    )
+
+
+getSelectedItem : Autocomplete -> Maybe Item
+getSelectedItem model =
+  List.drop model.selectedItemIndex model.filteredItems
+    |> List.head
+
+
+{-| Get the text of the currently selected item
+-}
+getSelectedItemText : Autocomplete -> Text
+getSelectedItemText model =
+  case (getSelectedItem model) of
+    Just item ->
+      item.text
+
+    Nothing ->
+      model.value

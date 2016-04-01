@@ -1,8 +1,7 @@
 .autocomplete-menu-default {
     position:absolute;
-    top: 0;
     left: 0;
-    margin-top: 35px;
+    margin-top: 5px;
     background: white;
     color: black;
     border: 1px solid #DDD;
@@ -15,6 +14,10 @@
 .autocomplete-selected-item-default {
     background: #3366FF;
     color: white;
+    display: block;
+    padding: 5px 10px;
+    border-bottom: 1px solid #DDD;
+    cursor: pointer;
 }
 
 .autocomplete-list-default {
@@ -37,8 +40,8 @@
     color: black;
     position: relative;
     display: block;
-    padding: 0.8em;
     border: none;
-    font-size: 14px;
-    font-weight: bold;
+    font-size: 12px;
+    font-family: monospace;
+    opacity: 0.5;
 }

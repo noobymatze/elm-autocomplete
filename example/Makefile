@@ -1,4 +1,4 @@
-ELM_MAIN = Example
+ELM_MAIN = AdvancedExample
 ELM_OUTPUT = elm.js
 STATIC =
 BROWSER_TARGET = example.html

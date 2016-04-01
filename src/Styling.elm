@@ -37,11 +37,11 @@ getStyling maybeClassConfig subcomponent =
         Nothing ->
           ClassConfig [] [] [] [] []
 
-    styleWithDefault classList defStyle =
-      if List.isEmpty classList then
+    styleWithDefault classList defaultStyle' =
+      if not (List.isEmpty classList) then
         style []
       else
-        defStyle
+        defaultStyle'
   in
     case subcomponent of
       Menu ->
@@ -74,7 +74,7 @@ menuStyle : Attribute
 menuStyle =
   style
     [ ( "position", "absolute" )
-    , ( "top", "left" )
+    , ( "top", "10px" )
     , ( "left", "0" )
     , ( "margin-top", "5px" )
     , ( "background", "white" )
