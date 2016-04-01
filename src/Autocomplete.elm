@@ -297,8 +297,7 @@ viewInput address model =
 viewItem : Signal.Address Action -> Autocomplete -> Item -> Index -> Html
 viewItem address model item index =
   li
-    [ id item.key
-    , classList (getStyling model.classes Styling.Item).classes'
+    [ classList (getStyling model.classes Styling.Item).classes'
     , (getStyling model.classes Styling.Item).inlineStyle
     , onMouseEnter address (ChangeSelection index)
     ]
@@ -308,8 +307,7 @@ viewItem address model item index =
 viewSelectedItem : Signal.Address Action -> Autocomplete -> Item -> Html
 viewSelectedItem address model item =
   li
-    [ id item.key
-    , classList (getStyling model.classes Styling.SelectedItem).classes'
+    [ classList (getStyling model.classes Styling.SelectedItem).classes'
     , (getStyling model.classes Styling.SelectedItem).inlineStyle
     , onClick address Complete
     ]
@@ -366,6 +364,7 @@ updateInputValue text model =
         , filteredItems =
             model.items
               |> List.sortWith model.compareFn
+        , selectedItemIndex = 0
       }
     , Effects.none
     )
@@ -376,6 +375,7 @@ updateInputValue text model =
             List.filter (\item -> model.filterFn item text) model.items
               |> List.sortWith model.compareFn
         , showLoading = True
+        , selectedItemIndex = 0
       }
     , getMoreItems text model
     )

@@ -69,7 +69,7 @@ view address model =
   div
     [ style [ ( "position", "relative" ), ( "font-family", "monospace" ), ( "font-size", "12px" ) ] ]
     [ span
-        [ style [ ( "position", "absolute" ), ( "left", "1px" ), ( "top", "1px" ) ] ]
+        [ style [ ( "position", "absolute" ), ( "left", "3px" ), ( "top", "3px" ) ] ]
         [ span [ style [ ( "visibility", "none" ) ] ] [ text model.autocomplete.value ]
         , span [ style [ ( "color", "gray" ) ] ] [ text model.autocompleteRemaining ]
         ]

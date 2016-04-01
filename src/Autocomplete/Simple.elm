@@ -1,4 +1,4 @@
-module Autocomplete.Simple (Autocomplete, Item, ClassListConfig, ClassList, init, initWithClasses, initItem, Action, update, view, getSelectedItemText) where
+module Autocomplete.Simple (Autocomplete, Item, ClassListConfig, ClassList, init, initWithClasses, initItem, customizeNoMatches, Action, update, view, getSelectedItemText) where
 
 {-| A customizable autocomplete component.
 
@@ -48,6 +48,7 @@ type alias Autocomplete =
   , selectedItemIndex : Index
   , classes : Maybe ClassListConfig
   , noMatchesDisplay : Html
+  , showMenu : Bool
   }
 
 
@@ -96,6 +97,7 @@ init items maxSize =
   , selectedItemIndex = 0
   , classes = Nothing
   , noMatchesDisplay = p [] [ text "No Matches" ]
+  , showMenu = False
   }
 
 
@@ -144,6 +146,7 @@ type Action
   | SetValue String
   | Complete
   | ChangeSelection Int
+  | ShowMenu Bool
 
 
 {-| The quintessential Elm Architecture reducer.
@@ -161,6 +164,7 @@ update action model =
           , filteredItems =
               model.items
                 |> List.sortWith model.compareFn
+          , selectedItemIndex = 0
         }
       else
         { model
@@ -168,6 +172,7 @@ update action model =
           , filteredItems =
               List.filter (\item -> model.filterFn item value) model.items
                 |> List.sortWith model.compareFn
+          , selectedItemIndex = 0
         }
 
     Complete ->
@@ -178,7 +183,7 @@ update action model =
       in
         case selectedItem of
           Just item ->
-            { model | value = item.text }
+            { model | value = item.text, showMenu = False }
 
           Nothing ->
             model
@@ -192,6 +197,9 @@ update action model =
       in
         { model | selectedItemIndex = boundedNewIndex }
 
+    ShowMenu bool ->
+      { model | showMenu = bool }
+
 
 {-| The full Autocomplete view, with menu and input.
     Needs a Signal.Address and Autocomplete (typical of the Elm Architecture).
@@ -199,9 +207,11 @@ update action model =
 view : Address Action -> Autocomplete -> Html
 view address model =
   div
-    []
+    [ onBlur address (ShowMenu False) ]
     [ viewInput address model
-    , if List.isEmpty model.filteredItems then
+    , if not model.showMenu then
+        div [] []
+      else if List.isEmpty model.filteredItems then
         model.noMatchesDisplay
       else
         viewMenu address model
@@ -229,6 +239,7 @@ viewInput address model =
       [ type' "text"
       , on "input" targetValue (Signal.message address << SetValue)
       , on "keydown" keyCode (\code -> Signal.message address (handleKeyDown code))
+      , onFocus address (ShowMenu True)
       , value model.value
       , classList (getStyling model.classes Styling.Input).classes'
       , (getStyling model.classes Styling.Input).inlineStyle
