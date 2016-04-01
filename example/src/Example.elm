@@ -27,7 +27,7 @@ initExampleClassListConfig =
 main : Signal Html.Html
 main =
   StartApp.Simple.start
-    { model = initWithClasses testData initExampleClassListConfig
+    { model = initWithClasses testData 5 initExampleClassListConfig
     , update = update
     , view = view
     }

@@ -212,7 +212,7 @@ update action model =
           Basics.max newIndex 0
             |> Basics.min ((List.length model.filteredItems) - 1)
       in
-        ( { model | selectedItemIndex = Debug.log "newIndex" boundedNewIndex }, Effects.none )
+        ( { model | selectedItemIndex = boundedNewIndex }, Effects.none )
 
 
 {-| The full Autocomplete view, with menu and input.
@@ -327,7 +327,7 @@ updateInputValue : Text -> Autocomplete -> ( Autocomplete, Effects Action )
 updateInputValue text model =
   if text == "" then
     ( { model
-        | value = value
+        | value = text
         , filteredItems =
             model.items
               |> List.sortWith model.compareFn
@@ -336,7 +336,7 @@ updateInputValue text model =
     )
   else
     ( { model
-        | value = value
+        | value = text
         , filteredItems =
             List.filter (\item -> model.filterFn item text) model.items
               |> List.sortWith model.compareFn

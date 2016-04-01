@@ -1,4 +1,3 @@
-ELM_MAIN = AdvancedExample
 ELM_OUTPUT = elm.js
 STATIC =
 BROWSER_TARGET = example.html
@@ -16,14 +15,19 @@ STATIC_SOURCES = $(STATIC:%=$(SOURCE_DIR)/%)
 
 .PHONY: all open clean clean-build clean-all static elm new
 
-all: $(BUILD_DIR) $(ELM_BUILD) static
-
 new: clean-build all
 
 $(ELM_BUILD): elm
 
-elm:
-	elm make --yes --output $(ELM_BUILD) $(ELM_SOURCE)
+plain:
+	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/Example.elm
+
+remote:
+	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/RemoteExample.elm
+
+advanced:
+	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/AdvancedExample.elm
+
 
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)
