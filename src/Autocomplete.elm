@@ -237,6 +237,7 @@ update action model =
         boundedNewIndex =
           Basics.max newIndex 0
             |> Basics.min ((List.length model.filteredItems) - 1)
+            |> Basics.min (model.maxListSize - 1)
       in
         ( { model | selectedItemIndex = boundedNewIndex }, Effects.none )
 
