@@ -369,16 +369,25 @@ updateInputValue text model =
     , Effects.none
     )
   else
-    ( { model
-        | value = text
-        , filteredItems =
-            List.filter (\item -> model.filterFn item text) model.items
-              |> List.sortWith model.compareFn
-        , showLoading = True
-        , selectedItemIndex = 0
-      }
-    , getMoreItems text model
-    )
+    let
+      filteredItems =
+        List.filter (\item -> model.filterFn item text) model.items
+          |> List.sortWith model.compareFn
+
+      showLoading =
+        if List.isEmpty filteredItems then
+          True
+        else
+          False
+    in
+      ( { model
+          | value = text
+          , filteredItems = filteredItems
+          , showLoading = showLoading
+          , selectedItemIndex = 0
+        }
+      , getMoreItems text model
+      )
 
 
 getSelectedItem : Autocomplete -> Maybe Item
