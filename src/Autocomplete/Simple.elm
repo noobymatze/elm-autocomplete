@@ -17,9 +17,9 @@ Check out how easy it is to plug into `StartApp`:
 main : Signal Html.Html
 main =
   StartApp.Simple.start
-    { model = init [ "elm", "makes", "coding", "life", "easy" ]
-    , update = update
-    , view = view
+    { model = Autocomplete.init [ "elm", "makes", "coding", "life", "easy" ]
+    , update = Autocomplete.update
+    , view = Autocomplete.view
     }
 ```
 
