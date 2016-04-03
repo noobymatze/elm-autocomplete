@@ -207,7 +207,7 @@ viewItem address model item index =
     [ model.config.styleViewFn Styling.Item
     , onMouseEnter address (ChangeSelection index)
     ]
-    [ text item ]
+    [ model.config.itemHtmlFn item ]
 
 
 viewSelectedItem : Autocomplete -> Text -> Html
@@ -215,7 +215,7 @@ viewSelectedItem model item =
   li
     [ model.config.styleViewFn Styling.SelectedItem
     ]
-    [ text item ]
+    [ model.config.itemHtmlFn item ]
 
 
 viewMenu : Signal.Address Action -> Autocomplete -> Html

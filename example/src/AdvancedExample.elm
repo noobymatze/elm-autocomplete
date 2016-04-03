@@ -1,6 +1,7 @@
 module Main (..) where
 
-import Autocomplete.Simple as Autocomplete exposing (getSelectedItemText)
+import Autocomplete.Config
+import Autocomplete.Simple as Autocomplete exposing (Autocomplete, getSelectedItemText)
 import Autocomplete.Styling as Styling
 import StartApp.Simple
 import Html exposing (..)
@@ -29,7 +30,7 @@ styleView view =
 
 type alias Model =
   { autocompleteRemaining : String
-  , autocomplete : Autocomplete.Model
+  , autocomplete : Autocomplete
   }
 
 
@@ -37,8 +38,9 @@ init : Model
 init =
   let
     config =
-      Autocomplete.defaultConfig
-        |> Autocomplete.setStyleViewFn styleView
+      Autocomplete.Config.defaultConfig
+        |> Autocomplete.Config.setStyleViewFn styleView
+        |> Autocomplete.Config.setItemHtml getItemHtml
   in
     { autocompleteRemaining = ""
     , autocomplete = Autocomplete.initWithConfig [ "elm", "makes", "coding", "life", "easy" ] config
@@ -78,6 +80,15 @@ view address model =
         , span [ style [ ( "color", "gray" ) ] ] [ text model.autocompleteRemaining ]
         ]
     , Autocomplete.view (Signal.forwardTo address Autocomplete) model.autocomplete
+    ]
+
+
+getItemHtml : String -> Html
+getItemHtml text' =
+  div
+    [ style [ ( "display", "flex" ), ( "justify-content", "space-between" ) ] ]
+    [ span [] [ text text' ]
+    , span [] [ text "😍" ]
     ]
 
 
