@@ -175,10 +175,10 @@ viewInput : Address Action -> Autocomplete -> Html
 viewInput address model =
   let
     arrowUp =
-      40
+      38
 
     arrowDown =
-      38
+      40
 
     handleKeyDown code =
       if code == arrowUp then

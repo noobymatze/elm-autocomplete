@@ -4,6 +4,7 @@ import Effects exposing (Never)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Autocomplete exposing (init, update, view)
+import Autocomplete.Config
 import StartApp
 import Task exposing (Task)
 import Http
@@ -36,8 +37,8 @@ getItemsTask value index =
 app =
   let
     config =
-      Autocomplete.defaultConfig
-        |> Autocomplete.setLoadingDisplay (img [ src "assets/loading.svg" ] [])
+      Autocomplete.Config.defaultConfig
+        |> Autocomplete.Config.setLoadingDisplay (img [ src "assets/loading.svg" ] [])
   in
     StartApp.start
       { init = init [] getItemsTask

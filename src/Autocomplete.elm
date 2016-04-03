@@ -44,8 +44,8 @@ getItemsTask value index =
 app =
   let
     config =
-      Autocomplete.defaultConfig
-        |> Autocomplete.setLoadingDisplay (img [ src "assets/loading.svg" ] [])
+      Autocomplete.Config.defaultConfig
+        |> Autocomplete.Config.setLoadingDisplay (img [ src "assets/loading.svg" ] [])
   in
     StartApp.start
       { init = init [] getItemsTask
@@ -53,6 +53,15 @@ app =
       , view = view
       , inputs = []
       }
+
+
+main =
+  app.html
+
+
+port tasks : Signal (Task.Task Never ())
+port tasks =
+  app.tasks
 ```
 
 The above example can be found in `example/src/RemoteExample.elm`.
@@ -224,10 +233,10 @@ viewInput : Signal.Address Action -> Autocomplete -> Html
 viewInput address model =
   let
     arrowUp =
-      40
+      38
 
     arrowDown =
-      38
+      40
 
     handleKeyDown code =
       if code == arrowUp then
