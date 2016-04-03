@@ -1,14 +1,61 @@
 module Autocomplete (Autocomplete, GetItemsTask, init, initWithConfig, Action, update, view, getSelectedItemText) where
 
-{-| A customizable autocomplete component.
+{-| A customizable Autocomplete component.
+
+This Autocomplete has a dynamic list of items.
+See the `Autocomplete.Simple` module for using a simple, static list of items.
 
 The Autocomplete consists of a menu, a list, the list's many items, and an input.
 All of these views are styleable via css classes.
-See the Styling module.
+See the `Autocomplete.Styling` module.
 
 The currently selected item is preserved and styled with the aforementioned module.
 
 This selection is modified by keyboard arrow input, mouse clicks, and API consumer defined keyCodes.
+
+This Autocomplete calls a API consumer-defined function that returns a refreshed list
+of items upon every input or selection change.
+
+An example of plugging this into `StartApp`:
+```
+fetchMoreItems : String -> Task Effects.Never (List String)
+fetchMoreItems url =
+  Http.url url []
+    |> Http.getString
+    |> Task.toMaybe
+    |> Task.map responseToItems
+
+
+responseToItems : Maybe String -> List String
+responseToItems maybeString =
+  case maybeString of
+    Just string ->
+      String.lines string
+
+    Nothing ->
+      []
+
+
+getItemsTask : String -> Int -> Task Effects.Never (List String)
+getItemsTask value index =
+  fetchMoreItems "https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt"
+
+
+app =
+  let
+    config =
+      Autocomplete.defaultConfig
+        |> Autocomplete.setLoadingDisplay (img [ src "assets/loading.svg" ] [])
+  in
+    StartApp.start
+      { init = init [] getItemsTask
+      , update = update
+      , view = view
+      , inputs = []
+      }
+```
+
+The above example can be found in `example/src/RemoteExample.elm`.
 
 # Definition
 @docs Autocomplete, GetItemsTask

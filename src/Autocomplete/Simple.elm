@@ -1,14 +1,27 @@
 module Autocomplete.Simple (Autocomplete, init, initWithConfig, Action, update, view, getSelectedItemText) where
 
-{-| A customizable autocomplete component.
+{-| A customizable Autocomplete component.
 
-The autocomplete consists of a menu, a list, list items, and an input.
-All of the aforementioned are styleable via css classes.
+This Autocomplete has a static list of items. See the Autocomplete module for maintaining a dynamic list of items.
 
-The currently selected item is preserved.
+The Autocomplete consists of a menu, a list, the list's many items, and an input.
+All of these views are styleable via css classes.
+See the Styling module.
 
-Selection is modified by keyboard input, mouse clicks,
-and is also styled via css classes.
+The currently selected item is preserved and styled with the aforementioned module.
+
+This selection is modified by keyboard arrow input, mouse clicks, and API consumer defined keyCodes.
+
+Check out how easy it is to plug into `StartApp`:
+```
+main : Signal Html.Html
+main =
+  StartApp.Simple.start
+    { model = init [ "elm", "makes", "coding", "life", "easy" ]
+    , update = update
+    , view = view
+    }
+```
 
 # Definition
 @docs Autocomplete
