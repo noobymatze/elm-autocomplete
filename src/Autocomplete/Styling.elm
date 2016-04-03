@@ -6,6 +6,48 @@ The autocomplete consists of a menu, a list, list items, and an input.
 This module includes functions to provide css class names for styling those
 child views.
 
+Styling is easy as:
+```
+testData : List String
+testData =
+  [ "elm"
+  , "makes"
+  , "coding"
+  , "life"
+  , "easy"
+  ]
+
+styleView : Styling.View -> Html.Attribute
+styleView view =
+  case view of
+    Styling.Menu ->
+      class "autocomplete-menu-default"
+
+    Styling.List ->
+      class "autocomplete-list-default"
+
+    Styling.Item ->
+      class "autocomplete-item-default"
+
+    Styling.SelectedItem ->
+      class "autocomplete-selected-item-default"
+
+    Styling.Input ->
+      class "autocomplete-input-default"
+
+main =
+  let
+    config =
+      Autocomplete.Config.defaultConfig
+        |> Autocomplete.Config.setStyleViewFn styleView
+  in
+    StartApp.Simple.start
+      { model = initWithConfig testData config
+      , update = update
+      , view = view
+      }
+```
+
 # Child Views
 @docs View
 

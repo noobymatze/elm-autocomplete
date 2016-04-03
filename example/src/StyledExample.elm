@@ -1,5 +1,6 @@
 module Main (..) where
 
+import Autocomplete.Config
 import Autocomplete.Simple as Autocomplete exposing (initWithConfig, update, view)
 import Autocomplete.Styling as Styling
 import StartApp.Simple
@@ -40,8 +41,8 @@ main : Signal Html.Html
 main =
   let
     config =
-      Autocomplete.defaultConfig
-        |> Autocomplete.setStyleViewFn styleView
+      Autocomplete.Config.defaultConfig
+        |> Autocomplete.Config.setStyleViewFn styleView
   in
     StartApp.Simple.start
       { model = initWithConfig testData config
