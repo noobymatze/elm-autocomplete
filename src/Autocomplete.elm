@@ -2,13 +2,13 @@ module Autocomplete (Autocomplete, GetItemsTask, init, initWithConfig, Action, u
 
 {-| A customizable autocomplete component.
 
-The autocomplete consists of a menu, a list, list items, and an input.
-All of the aforementioned are styleable via css classes.
+The Autocomplete consists of a menu, a list, the list's many items, and an input.
+All of these views are styleable via css classes.
+See the Styling module.
 
-The currently selected item is preserved.
+The currently selected item is preserved and styled with the aforementioned module.
 
-Selection is modified by keyboard input, mouse clicks,
-and is also styled via css classes.
+This selection is modified by keyboard arrow input, mouse clicks, and API consumer defined keyCodes.
 
 # Definition
 @docs Autocomplete, GetItemsTask
@@ -176,19 +176,21 @@ view address model =
 viewInput : Signal.Address Action -> Autocomplete -> Html
 viewInput address model =
   let
+    arrowUp =
+      40
+
+    arrowDown =
+      38
+
     handleKeyDown code =
-      case code of
-        38 ->
-          ChangeSelection (model.selectedItemIndex - 1)
-
-        40 ->
-          ChangeSelection (model.selectedItemIndex + 1)
-
-        9 ->
-          Complete
-
-        _ ->
-          NoOp
+      if code == arrowUp then
+        ChangeSelection (model.selectedItemIndex - 1)
+      else if code == arrowDown then
+        ChangeSelection (model.selectedItemIndex + 1)
+      else if List.member code model.config.completionKeyCodes then
+        Complete
+      else
+        NoOp
   in
     input
       [ type' "text"

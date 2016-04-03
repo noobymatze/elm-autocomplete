@@ -161,19 +161,21 @@ view address model =
 viewInput : Address Action -> Autocomplete -> Html
 viewInput address model =
   let
+    arrowUp =
+      40
+
+    arrowDown =
+      38
+
     handleKeyDown code =
-      case code of
-        38 ->
-          ChangeSelection (model.selectedItemIndex - 1)
-
-        40 ->
-          ChangeSelection (model.selectedItemIndex + 1)
-
-        9 ->
-          Complete
-
-        _ ->
-          NoOp
+      if code == arrowUp then
+        ChangeSelection (model.selectedItemIndex - 1)
+      else if code == arrowDown then
+        ChangeSelection (model.selectedItemIndex + 1)
+      else if List.member code model.config.completionKeyCodes then
+        Complete
+      else
+        NoOp
   in
     input
       [ type' "text"

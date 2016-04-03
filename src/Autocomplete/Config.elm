@@ -1,4 +1,4 @@
-module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, defaultConfig, setStyleViewFn, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay) where
+module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, defaultConfig, setStyleViewFn, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay) where
 
 {-| Configuration module for the Autocomplete component.
 
@@ -9,7 +9,7 @@ module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, default
 @docs defaultConfig
 
 # Modifiers
-@docs setStyleViewFn, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay
+@docs setStyleViewFn, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay
 
 
 -}
@@ -17,6 +17,7 @@ module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, default
 import Html exposing (..)
 import String
 import Autocomplete.Styling as Styling
+import Char exposing (KeyCode)
 
 
 {-| The configuration record for an Autocomplete component.
@@ -27,6 +28,7 @@ type alias Config =
 
 type alias Model =
   { styleViewFn : Styling.View -> Attribute
+  , completionKeyCodes : List KeyCode
   , itemHtmlFn : ItemHtmlFn
   , maxListSize : Int
   , filterFn : Text -> InputValue -> Bool
@@ -62,49 +64,56 @@ type alias Index =
 
 {-| Provide a function that produces an attribute to style a particular View
 -}
-setStyleViewFn : (Styling.View -> Attribute) -> Model -> Model
+setStyleViewFn : (Styling.View -> Attribute) -> Config -> Config
 setStyleViewFn styleViewFn config =
   { config | styleViewFn = styleViewFn }
 
 
+{-| Provide keycodes for autocompletion. By default, completion happens on tab press.
+-}
+setCompletionKeyCodes : List KeyCode -> Config -> Config
+setCompletionKeyCodes keycodes config =
+  { config | completionKeyCodes = keycodes }
+
+
 {-| Provide a custom HTML view for an Autocomplete item's text
 -}
-setItemHtml : ItemHtmlFn -> Model -> Model
+setItemHtml : ItemHtmlFn -> Config -> Config
 setItemHtml itemHtmlFn config =
   { config | itemHtmlFn = itemHtmlFn }
 
 
 {-| Provide a maximum list size for the Autocomplete menu
 -}
-setMaxListSize : Int -> Model -> Model
+setMaxListSize : Int -> Config -> Config
 setMaxListSize maxListSize config =
   { config | maxListSize = maxListSize }
 
 
 {-| Provide a custom filter function used to filter Autocomplete items.
 -}
-setFilterFn : (Text -> InputValue -> Bool) -> Model -> Model
+setFilterFn : (Text -> InputValue -> Bool) -> Config -> Config
 setFilterFn filterFn config =
   { config | filterFn = filterFn }
 
 
 {-| Provide a custom comparison function to order the Autocomplete matches.
 -}
-setCompareFn : (Text -> Text -> Order) -> Model -> Model
+setCompareFn : (Text -> Text -> Order) -> Config -> Config
 setCompareFn compareFn config =
   { config | compareFn = compareFn }
 
 
 {-| Provide a custom HTML display for the case that nothing matches.
 -}
-setNoMatchesDisplay : Html -> Model -> Model
+setNoMatchesDisplay : Html -> Config -> Config
 setNoMatchesDisplay noMatchesDisplay config =
   { config | noMatchesDisplay = noMatchesDisplay }
 
 
 {-| Provide a custom loading display for the case when more items are being fetched
 -}
-setLoadingDisplay : Html -> Model -> Model
+setLoadingDisplay : Html -> Config -> Config
 setLoadingDisplay loadingDisplay config =
   { config | loadingDisplay = loadingDisplay }
 
@@ -115,9 +124,12 @@ setLoadingDisplay loadingDisplay config =
 
 {-| A simple Autocomplete configuration
 -}
-defaultConfig : Model
+defaultConfig : Config
 defaultConfig =
   { styleViewFn = Styling.defaultStyles
+  , completionKeyCodes =
+      [ 9 ]
+      -- defaults to tab
   , itemHtmlFn = (\item -> text item)
   , maxListSize = 5
   , filterFn = (\item value -> String.startsWith value item)
