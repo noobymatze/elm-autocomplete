@@ -48,7 +48,7 @@ app =
         |> Autocomplete.Config.setLoadingDisplay (img [ src "assets/loading.svg" ] [])
   in
     StartApp.start
-      { init = Autocomplete.init [] getItemsTask
+      { init = Autocomplete.initWithConfig [] getItemsTask config
       , update = Autocomplete.update
       , view = Autocomplete.view
       , inputs = []
