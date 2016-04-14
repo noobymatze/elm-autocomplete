@@ -210,10 +210,11 @@ viewItem address model item index =
     [ model.config.itemHtmlFn item ]
 
 
-viewSelectedItem : Autocomplete -> Text -> Html
-viewSelectedItem model item =
+viewSelectedItem : Signal.Address Action -> Autocomplete -> Text -> Html
+viewSelectedItem address model item =
   li
     [ model.config.styleViewFn Styling.SelectedItem
+    , onClick address Complete
     ]
     [ model.config.itemHtmlFn item ]
 
@@ -231,7 +232,7 @@ viewList address model =
   let
     getItemView index item =
       if index == model.selectedItemIndex then
-        viewSelectedItem model item
+        viewSelectedItem address model item
       else
         viewItem address model item index
   in
