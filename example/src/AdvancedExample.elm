@@ -65,7 +65,7 @@ update action model =
         { model
           | autocompleteRemaining =
               preview
-                |> String.slice (String.length updatedAutocomplete.value) (String.length preview)
+                |> String.slice (String.length (Autocomplete.getCurrentValue updatedAutocomplete)) (String.length preview)
           , autocomplete = updatedAutocomplete
         }
 
@@ -76,7 +76,7 @@ view address model =
     [ style [ ( "position", "relative" ), ( "font-family", "monospace" ), ( "font-size", "12px" ) ] ]
     [ span
         [ style [ ( "position", "absolute" ), ( "left", "3px" ), ( "top", "3px" ) ] ]
-        [ span [ style [ ( "visibility", "none" ) ] ] [ text model.autocomplete.value ]
+        [ span [ style [ ( "visibility", "none" ) ] ] [ text (Autocomplete.getCurrentValue model.autocomplete) ]
         , span [ style [ ( "color", "gray" ) ] ] [ text model.autocompleteRemaining ]
         ]
     , Autocomplete.view (Signal.forwardTo address Autocomplete) model.autocomplete

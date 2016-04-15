@@ -1,4 +1,4 @@
-module Autocomplete (Autocomplete, GetItemsTask, init, initWithConfig, Action, update, view, getSelectedItemText) where
+module Autocomplete (Autocomplete, GetItemsTask, init, initWithConfig, Action, update, view, getSelectedItemText, getCurrentValue) where
 
 {-| A customizable Autocomplete component.
 
@@ -79,7 +79,7 @@ The above example can be found in `example/src/RemoteExample.elm`.
 @docs view
 
 # Helpers
-@docs getSelectedItemText
+@docs getSelectedItemText, getCurrentValue
 
 -}
 
@@ -359,7 +359,7 @@ getSelectedItem (Autocomplete model) =
 
 {-| Get the text of the currently selected item
 -}
-getSelectedItemText : Autocomplete -> String
+getSelectedItemText : Autocomplete -> Text
 getSelectedItemText (Autocomplete model) =
   case (getSelectedItem (Autocomplete model)) of
     Just item ->
@@ -367,3 +367,10 @@ getSelectedItemText (Autocomplete model) =
 
     Nothing ->
       model.value
+
+
+{-| Get the string currently entered by the user in the Autocomplete
+-}
+getCurrentValue : Autocomplete -> String
+getCurrentValue (Autocomplete model) =
+  model.value

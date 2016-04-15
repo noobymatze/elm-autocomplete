@@ -1,4 +1,4 @@
-module Autocomplete.Simple (Autocomplete, init, initWithConfig, Action, update, view, getSelectedItemText) where
+module Autocomplete.Simple (Autocomplete, init, initWithConfig, Action, update, view, getSelectedItemText, getCurrentValue) where
 
 {-| A customizable Autocomplete component.
 
@@ -36,7 +36,7 @@ main =
 @docs view
 
 # Helpers
-@docs getSelectedItemText
+@docs getSelectedItemText, getCurrentValue
 
 -}
 
@@ -262,3 +262,10 @@ getSelectedItemText (Autocomplete model) =
 
     Nothing ->
       model.value
+
+
+{-| Get the string currently entered by the user in the Autocomplete
+-}
+getCurrentValue : Autocomplete -> String
+getCurrentValue (Autocomplete model) =
+  model.value
