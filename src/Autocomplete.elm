@@ -179,8 +179,8 @@ update action (Autocomplete model) =
           { model
             | items = items
             , matches =
-                List.filter (\item -> (getConfig model.config).filterFn item model.value) model.items
-                  |> List.sortWith (getConfig model.config).compareFn
+                List.filter (\item -> model.config.filterFn item model.value) model.items
+                  |> List.sortWith model.config.compareFn
             , showLoading = False
           }
       , Effects.none
@@ -199,7 +199,7 @@ update action (Autocomplete model) =
         boundedNewIndex =
           Basics.max newIndex 0
             |> Basics.min ((List.length model.matches) - 1)
-            |> Basics.min ((getConfig model.config).maxListSize - 1)
+            |> Basics.min (model.config.maxListSize - 1)
       in
         ( Autocomplete { model | selectedItemIndex = boundedNewIndex }, Effects.none )
 
@@ -218,9 +218,9 @@ view address (Autocomplete model) =
     , if not model.showMenu then
         div [] []
       else if model.showLoading then
-        (getConfig model.config).loadingDisplay
+        model.config.loadingDisplay
       else if List.isEmpty model.matches then
-        (getConfig model.config).noMatchesDisplay
+        model.config.noMatchesDisplay
       else
         viewMenu address (Autocomplete model)
     ]
@@ -240,7 +240,7 @@ viewInput address (Autocomplete model) =
         ChangeSelection (model.selectedItemIndex - 1)
       else if code == arrowDown then
         ChangeSelection (model.selectedItemIndex + 1)
-      else if (List.member code (getConfig model.config).completionKeyCodes) then
+      else if (List.member code model.config.completionKeyCodes) then
         Complete
       else
         NoOp
@@ -251,7 +251,7 @@ viewInput address (Autocomplete model) =
       , on "keydown" keyCode (\code -> Signal.message address (handleKeyDown code))
       , onFocus address (ShowMenu True)
       , value model.value
-      , (getConfig model.config).styleViewFn Styling.Input
+      , model.config.styleViewFn Styling.Input
       , autocomplete True
       ]
       []
@@ -260,25 +260,25 @@ viewInput address (Autocomplete model) =
 viewItem : Signal.Address Action -> Autocomplete -> String -> Index -> Html
 viewItem address (Autocomplete model) item index =
   li
-    [ (getConfig model.config).styleViewFn Styling.Item
+    [ model.config.styleViewFn Styling.Item
     , onMouseEnter address (ChangeSelection index)
     ]
-    [ (getConfig model.config).itemHtmlFn item ]
+    [ model.config.itemHtmlFn item ]
 
 
 viewSelectedItem : Signal.Address Action -> Autocomplete -> String -> Html
 viewSelectedItem address (Autocomplete model) item =
   li
-    [ (getConfig model.config).styleViewFn Styling.SelectedItem
+    [ model.config.styleViewFn Styling.SelectedItem
     , onClick address Complete
     ]
-    [ (getConfig model.config).itemHtmlFn item ]
+    [ model.config.itemHtmlFn item ]
 
 
 viewMenu : Signal.Address Action -> Autocomplete -> Html
 viewMenu address (Autocomplete model) =
   div
-    [ (getConfig model.config).styleViewFn Styling.Menu
+    [ model.config.styleViewFn Styling.Menu
     ]
     [ viewList address (Autocomplete model) ]
 
@@ -293,10 +293,10 @@ viewList address (Autocomplete model) =
         viewItem address (Autocomplete model) item index
   in
     ul
-      [ (getConfig model.config).styleViewFn Styling.List
+      [ model.config.styleViewFn Styling.List
       ]
       (List.indexedMap getItemView model.matches
-        |> List.take (getConfig model.config).maxListSize
+        |> List.take model.config.maxListSize
       )
 
 
@@ -323,7 +323,7 @@ updateInputValue value (Autocomplete model) =
           | value = value
           , matches =
               model.items
-                |> List.sortWith (getConfig model.config).compareFn
+                |> List.sortWith model.config.compareFn
           , selectedItemIndex = 0
         }
     , Effects.none
@@ -331,8 +331,8 @@ updateInputValue value (Autocomplete model) =
   else
     let
       matches =
-        List.filter (\item -> (getConfig model.config).filterFn item value) model.items
-          |> List.sortWith (getConfig model.config).compareFn
+        List.filter (\item -> model.config.filterFn item value) model.items
+          |> List.sortWith model.config.compareFn
 
       showLoading =
         if List.isEmpty matches then
@@ -367,7 +367,3 @@ getSelectedItemText (Autocomplete model) =
 
     Nothing ->
       model.value
-
-
-getConfig (Config.Config config) =
-  config
