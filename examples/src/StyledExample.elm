@@ -41,7 +41,7 @@ main =
   let
     config =
       Autocomplete.Config.defaultConfig
-        |> Autocomplete.Config.setGetClasses getClasses
+        |> Autocomplete.Config.setClassesFn getClasses
   in
     StartApp.Simple.start
       { model = initWithConfig testData config

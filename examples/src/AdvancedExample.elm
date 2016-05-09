@@ -41,7 +41,7 @@ init =
   let
     config =
       Autocomplete.Config.defaultConfig
-        |> Autocomplete.Config.setGetClasses getClasses
+        |> Autocomplete.Config.setClassesFn getClasses
         |> Autocomplete.Config.setItemHtml getItemHtml
   in
     { autocompleteRemaining = ""

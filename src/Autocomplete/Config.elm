@@ -1,4 +1,4 @@
-module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, Completed, defaultConfig, isValueControlled, setGetClasses, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay) where
+module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, Completed, defaultConfig, isValueControlled, setClassesFn, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay) where
 
 {-| Configuration module for the Autocomplete component.
 
@@ -9,7 +9,7 @@ module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, Complet
 @docs defaultConfig
 
 # Modifiers
-@docs isValueControlled, setGetClasses, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay
+@docs isValueControlled, setClassesFn, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay
 
 
 -}
@@ -82,8 +82,8 @@ isValueControlled bool config =
 
 {-| Provide a function that produces an list of classes to style a particular View
 -}
-setGetClasses : (Styling.View -> Styling.Classes) -> Config -> Config
-setGetClasses getClasses config =
+setClassesFn : (Styling.View -> Styling.Classes) -> Config -> Config
+setClassesFn getClasses config =
   { config | getClasses = getClasses, useDefaultStyles = False }
 
 
