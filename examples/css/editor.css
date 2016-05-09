@@ -7,4 +7,7 @@
   margin-bottom: 2em;
   box-shadow: inset 0px 1px 8px -3px #ABABAB;
   background: #fefefe;
+  resize: none;
+  min-height: 160px;
+  font-size: 15px;
 }

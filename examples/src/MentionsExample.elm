@@ -2,7 +2,7 @@ module Main (..) where
 
 import StartApp.Simple
 import Html exposing (..)
-import Html.Attributes exposing (value)
+import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Dict exposing (Dict)
 import Json.Decode as Json
@@ -178,12 +178,16 @@ view address model =
           NoOp
   in
     div
-      [ on "keydown" keyCode (\code -> Signal.message address <| (toggleMenu code)) ]
-      [ h2 [] [ text "Mentions Example" ]
+      [ style [ ("display", "flex"), ("flex-direction", "column"), ("justify-content", "center") ]
+      ,  on "keydown" keyCode (\code -> Signal.message address <| (toggleMenu code))
+      ]
+      [ h1 [] [ text "Mentions Example" ]
         , textarea
           [ on "input" targetValue (Signal.message address << SetValue)
           , onWithOptions "keydown" options dec (\code -> Signal.message address <| (navigate code))
           , value model.value
+          , class "editor"
+
           ]
           []
       , case model.currentMentionPos of
