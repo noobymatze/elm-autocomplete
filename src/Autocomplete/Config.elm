@@ -1,15 +1,15 @@
-module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, defaultConfig, setGetClasses, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay) where
+module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, Completed, defaultConfig, isValueControlled, setGetClasses, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay) where
 
 {-| Configuration module for the Autocomplete component.
 
 # Definition
-@docs Config, ItemHtmlFn, Text, InputValue, Index
+@docs Config, ItemHtmlFn, Text, InputValue, Index, Completed
 
 # Defaults
 @docs defaultConfig
 
 # Modifiers
-@docs setGetClasses, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay
+@docs isValueControlled, setGetClasses, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay
 
 
 -}
@@ -36,6 +36,7 @@ type alias Model =
   , compareFn : Text -> Text -> Order
   , noMatchesDisplay : Html
   , loadingDisplay : Html
+  , isValueControlled : Bool
   }
 
 
@@ -61,6 +62,22 @@ type alias InputValue =
 -}
 type alias Index =
   Int
+
+
+{-| True if an update completed the autocomplete
+-}
+type alias Completed =
+  Bool
+
+
+{-| Provide True to control the autocomplete value,
+    False to let the component control the value via a stylable `input` field.
+
+    The default config provides False.
+-}
+isValueControlled : Bool -> Config -> Config
+isValueControlled bool config =
+  { config | isValueControlled = bool }
 
 
 {-| Provide a function that produces an list of classes to style a particular View
@@ -138,6 +155,7 @@ defaultConfig =
   , compareFn = normalComparison
   , noMatchesDisplay = p [] [ text "No Matches" ]
   , loadingDisplay = p [] [ text "..." ]
+  , isValueControlled = False
   }
 
 

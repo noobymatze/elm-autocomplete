@@ -1,4 +1,4 @@
-module Autocomplete (Autocomplete, GetItemsTask, init, initWithConfig, Action, update, view, getSelectedItemText, getCurrentValue) where
+module Autocomplete (Autocomplete, GetItemsTask, init, initWithConfig, Action, update, view, getSelectedItemText, getCurrentValue, showMenu, setValue, isComplete, MenuNavigation(Previous, Next, Select), navigateMenu) where
 
 {-| A customizable Autocomplete component.
 
@@ -81,9 +81,12 @@ The above example can be found in `example/src/RemoteExample.elm`.
 # Helpers
 @docs getSelectedItemText, getCurrentValue
 
+# Controlling Behavior
+@docs showMenu, setValue, isComplete, MenuNavigation, navigateMenu
+
 -}
 
-import Autocomplete.Config as Config exposing (Config, Index, Text, InputValue)
+import Autocomplete.Config as Config exposing (Config, Index, Text, InputValue, Completed)
 import Autocomplete.DefaultStyles as DefaultStyles
 import Autocomplete.Model exposing (Model)
 import Autocomplete.Update as Autocomplete
@@ -92,6 +95,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Effects exposing (Effects)
+import Json.Decode as Json
 import Signal
 import Task exposing (Task)
 import Autocomplete.Styling as Styling
@@ -151,25 +155,45 @@ type Action
 
 {-| The quintessential Elm Architecture reducer.
 -}
-update : Action -> Autocomplete -> ( Autocomplete, Effects Action )
+update : Action -> Autocomplete -> ( Autocomplete, Effects Action, Completed )
 update action (Autocomplete model) =
   case action of
     UpdateAutocomplete act ->
-      ( Autocomplete { model | autocomplete = Autocomplete.update act model.autocomplete }
-      , Effects.none
-      )
+      let
+        ( updatedModel, completed ) =
+          Autocomplete.update act model.autocomplete
+        updatedAutocomplete =
+          Autocomplete { model | autocomplete = updatedModel }
+      in
+        if completed && not model.autocomplete.config.isValueControlled then
+           ( showMenu False updatedAutocomplete, Effects.none, completed )
+        else
+          ( updatedAutocomplete, Effects.none, completed )
 
     SetValue value ->
-      updateInputValue value (Autocomplete model)
+      let
+          ( auto, effects, completed ) =
+            updateInputValue value (Autocomplete model)
+      in
+          if not model.autocomplete.config.isValueControlled then
+             ( showMenu True auto, effects, completed )
+          else
+            ( auto, effects, completed )
+
 
     UpdateItems items ->
-      ( Autocomplete
-          { model
-            | autocomplete = Autocomplete.update (Autocomplete.UpdateItems items) model.autocomplete
-            , showLoading = False
-          }
-      , Effects.none
-      )
+      let
+        ( updatedModel, completed ) =
+          Autocomplete.update (Autocomplete.UpdateItems items) model.autocomplete
+      in
+        ( Autocomplete
+            { model
+              | autocomplete = updatedModel
+              , showLoading = False
+            }
+        , Effects.none
+        , completed
+        )
 
 
 {-| The full Autocomplete view, with menu and input.
@@ -194,26 +218,37 @@ view address (Autocomplete model) =
 viewInput : Signal.Address Action -> Autocomplete -> Html
 viewInput address (Autocomplete model) =
   let
-    arrowUp =
-      38
+    options =
+      { preventDefault = True, stopPropagation = False }
 
-    arrowDown =
-      40
+    dec =
+      (Json.customDecoder
+        keyCode
+        (\k ->
+          if List.member k (List.append [ 38, 40 ] model.autocomplete.config.completionKeyCodes) then
+            Ok k
+          else
+            Err "not handling that key"
+        )
+      )
 
     handleKeyDown code =
-      if code == arrowUp then
-        UpdateAutocomplete <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex - 1)
-      else if code == arrowDown then
-        UpdateAutocomplete <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex + 1)
-      else if (List.member code model.autocomplete.config.completionKeyCodes) then
-        UpdateAutocomplete Autocomplete.Complete
-      else
-        UpdateAutocomplete Autocomplete.NoOp
+      case code of
+        38 ->
+          UpdateAutocomplete
+            <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex - 1)
+
+        40 ->
+          UpdateAutocomplete
+            <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex + 1)
+
+        _ ->
+          UpdateAutocomplete Autocomplete.Complete
   in
     input
       [ type' "text"
       , on "input" targetValue (Signal.message address << SetValue)
-      , on "keydown" keyCode (\code -> Signal.message address (handleKeyDown code))
+      , onWithOptions "keydown" options dec (\code -> Signal.message address <| handleKeyDown code)
       , onFocus address (UpdateAutocomplete (Autocomplete.ShowMenu True))
       , value model.autocomplete.value
       , if model.autocomplete.config.useDefaultStyles then
@@ -235,35 +270,91 @@ getMoreItems value (Autocomplete model) =
     |> Effects.task
 
 
-updateInputValue : String -> Autocomplete -> ( Autocomplete, Effects Action )
+updateInputValue : String -> Autocomplete -> ( Autocomplete, Effects Action, Completed )
 updateInputValue value (Autocomplete model) =
   let
-    updatedAutocomplete =
+    ( updatedModel, completed ) =
       Autocomplete.update (Autocomplete.SetValue value) model.autocomplete
   in
     if value == "" then
       ( Autocomplete
           { model
-            | autocomplete = updatedAutocomplete
+            | autocomplete = updatedModel
           }
       , Effects.none
+      , completed
       )
     else
       let
         showLoading =
-          if List.isEmpty updatedAutocomplete.matches then
+          if List.isEmpty updatedModel.matches then
             True
           else
             False
       in
         ( Autocomplete
             { model
-              | autocomplete = updatedAutocomplete
+              | autocomplete = updatedModel
               , showLoading = showLoading
             }
         , getMoreItems value (Autocomplete model)
+        , completed
         )
 
+-- CONTROL FUNCTIONS
+
+{-| Set whether the menu should be shown
+-}
+showMenu : Bool -> Autocomplete -> Autocomplete
+showMenu bool auto =
+  let
+    (auto, effects, completed) =
+      update (UpdateAutocomplete (Autocomplete.ShowMenu bool)) auto
+  in
+    auto
+
+
+{-| Set current autocomplete value
+-}
+setValue : String -> Autocomplete -> Autocomplete
+setValue value auto =
+  let
+    (auto, effects, completed) =
+      update (SetValue value) auto
+  in
+    auto
+
+
+{-| Returns true if Autocomplete matches an item exactly
+-}
+isComplete : Autocomplete -> Bool
+isComplete (Autocomplete model) =
+  List.member model.autocomplete.value model.autocomplete.items
+
+{-| The possible actions to navigate the autocomplete menu
+-}
+type MenuNavigation
+  = Previous
+  | Next
+  | Select
+
+
+{-| When controlling the Autocomplete value, use this function
+    to provide an action for updating the menu selection.
+-}
+navigateMenu : MenuNavigation -> Autocomplete -> Action
+navigateMenu navigation (Autocomplete model) =
+  case navigation of
+    Previous ->
+      UpdateAutocomplete
+        <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex - 1)
+
+    Next ->
+      UpdateAutocomplete
+        <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex + 1)
+
+    Select ->
+      UpdateAutocomplete Autocomplete.Complete
 
 
 -- HELPERS

@@ -31,6 +31,8 @@ getClasses view =
 type alias Model =
   { autocompleteRemaining : String
   , autocomplete : Autocomplete
+  , value : String
+  , showMenu : Bool
   }
 
 
@@ -44,11 +46,15 @@ init =
   in
     { autocompleteRemaining = ""
     , autocomplete = Autocomplete.initWithConfig [ "elm", "makes", "coding", "life", "easy" ] config
+    , value = ""
+    , showMenu = False
     }
 
 
 type Action
   = Autocomplete Autocomplete.Action
+  | SetValue String
+  | ShowMenu Bool
 
 
 update : Action -> Model -> Model
@@ -56,7 +62,7 @@ update action model =
   case action of
     Autocomplete act ->
       let
-        updatedAutocomplete =
+        ( updatedAutocomplete, completed ) =
           Autocomplete.update act model.autocomplete
 
         preview =
@@ -68,6 +74,12 @@ update action model =
                 |> String.slice (String.length (Autocomplete.getCurrentValue updatedAutocomplete)) (String.length preview)
           , autocomplete = updatedAutocomplete
         }
+
+    SetValue value ->
+      { model | value = value }
+
+    ShowMenu bool ->
+      { model | showMenu = bool, autocomplete = Autocomplete.showMenu bool model.autocomplete }
 
 
 view : Signal.Address Action -> Model -> Html
