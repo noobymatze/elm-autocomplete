@@ -30,11 +30,11 @@ An advanced styling example: `./src/AdvancedExample.elm`
 
 To build: `make typeahead`
 
-#### Controlled Example
+#### Mentions Example
 
-A textarea with controlled autocompletes inside: `./src/ControlledExample.elm`
+A textarea with controlled autocompletes inside: `./src/MentionsExample.elm`
 
-To build: `make controlled`
+To build: `make mentions`
 
 Or, any of these without `make`:
 

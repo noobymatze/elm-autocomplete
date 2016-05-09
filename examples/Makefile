@@ -23,7 +23,7 @@ simple:
 	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/SimpleExample.elm
 
 styled:
-	elm make --yes --output ${ELM_BUILD} ${SOURCE_DIR}/StyledExample.elm
+	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/StyledExample.elm
 
 remote:
 	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/RemoteExample.elm
@@ -31,8 +31,8 @@ remote:
 typeahead:
 	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/TypeaheadExample.elm
 
-controlled:
-	elm make --yes --output ${ELM_BUILD} ${SOURCE_DIR}/ControlledExample.elm
+mentions:
+	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/MentionsExample.elm
 
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)

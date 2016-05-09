@@ -179,7 +179,8 @@ view address model =
   in
     div
       [ on "keydown" keyCode (\code -> Signal.message address <| (toggleMenu code)) ]
-      [ textarea
+      [ h2 [] [ text "Mentions Example" ]
+        , textarea
           [ on "input" targetValue (Signal.message address << SetValue)
           , onWithOptions "keydown" options dec (\code -> Signal.message address <| (navigate code))
           , value model.value
