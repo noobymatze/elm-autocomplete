@@ -28,8 +28,8 @@ styled:
 remote:
 	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/RemoteExample.elm
 
-advanced:
-	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/AdvancedExample.elm
+typeahead:
+	elm make --yes --output $(ELM_BUILD) $(SOURCE_DIR)/TypeaheadExample.elm
 
 controlled:
 	elm make --yes --output ${ELM_BUILD} ${SOURCE_DIR}/ControlledExample.elm

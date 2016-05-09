@@ -4,11 +4,17 @@ There are multiple examples for you to explore in the `./src` directory.
 
 ## Pick one to build
 
+#### Dead simple autocomplete
+
+Default autocomplete based on Github mentions CSS: `./src/SimpleExample.elm`
+
+To build :`make simple`
+
 #### Simple CSS Class Styling
 
-A simple, styled example: `./src/Example.elm`.
+A simple, styled example: `./src/StyledExample.elm`.
 
-To build: `make simple`
+To build: `make styled`
 
 
 #### HTTP
@@ -22,7 +28,13 @@ To build: `make remote`
 
 An advanced styling example: `./src/AdvancedExample.elm`
 
-To build: `make advanced`
+To build: `make typeahead`
+
+#### Controlled Example
+
+A textarea with controlled autocompletes inside: `./src/ControlledExample.elm`
+
+To build: `make controlled`
 
 Or, any of these without `make`:
 
