@@ -1,7 +1,8 @@
 module AtMention (..) where
 
-import Autocomplete.Simple as Autocomplete exposing (Autocomplete)
 import Autocomplete.Config
+import Autocomplete.Simple as Autocomplete exposing (Autocomplete)
+import Autocomplete.Styling as Styling
 import Html exposing (..)
 
 
@@ -19,12 +20,31 @@ type alias AtMention =
   }
 
 
+getClasses : Styling.View -> Styling.Classes
+getClasses view =
+  case view of
+    Styling.Menu ->
+      [ ( "mentionSuggestions", True ) ]
+
+    Styling.List ->
+      [ ("mentionList", True ) ]
+
+    Styling.Item ->
+      [ ( "mention", True ) ]
+
+    Styling.SelectedItem ->
+      [ ("mentionSelected", True ), ("mention", True ) ]
+
+    Styling.Input ->
+      []
+
 createAutocomplete : Autocomplete
 createAutocomplete =
   let
     config =
       Autocomplete.Config.defaultConfig
         |> Autocomplete.Config.isValueControlled True
+        |> Autocomplete.Config.setClassesFn getClasses
   in
     Autocomplete.initWithConfig people config
       |> Autocomplete.showMenu True
@@ -117,6 +137,4 @@ getValue model =
 
 view : Signal.Address Action -> AtMention -> Html
 view address model =
-  div
-    []
-    [ Autocomplete.view (Signal.forwardTo address Autocomplete) model.autocomplete ]
+  Autocomplete.view (Signal.forwardTo address Autocomplete) model.autocomplete

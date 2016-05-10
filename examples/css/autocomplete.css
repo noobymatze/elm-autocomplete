@@ -1,5 +1,5 @@
 .autocomplete-menu {
-    position:absolute;
+    position: absolute;
     left: 5px;
     margin-top: 5px;
     background: white;
@@ -20,9 +20,9 @@
 }
 
 .autocomplete-list {
-    list-style:none;
-    padding:0;
-    margin:auto;
+    list-style: none;
+    padding: 0;
+    margin: auto;
     max-height: 200px;
     overflow-y: auto;
 }

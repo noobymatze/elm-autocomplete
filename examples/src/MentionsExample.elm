@@ -10,7 +10,6 @@ import String
 import AtMention exposing (AtMention)
 import Autocomplete.Simple as Autocomplete
 
-
 type alias Model =
   { mentions : Dict Position AtMention
   , value : String
@@ -83,6 +82,7 @@ update action model =
           , mentions = updatedMentions
           , currentMentionPos = updatedMentionPos
         }
+
     ToggleMenu bool ->
       let
           updatedMention pos mentions =
@@ -190,7 +190,6 @@ view address model =
           , onWithOptions "keydown" options dec (\code -> Signal.message address <| (navigate code))
           , value model.value
           , class "editor"
-
           ]
           []
       , case model.currentMentionPos of
