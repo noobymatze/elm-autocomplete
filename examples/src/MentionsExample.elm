@@ -76,38 +76,12 @@ update action model =
 
     SetValue value ->
       let
-        getMentionLength mention =
-          AtMention.getValue mention
-            |> String.length
-
-        getNewMentionValue pos =
-          String.slice pos (pos + (getMentionLength <| getMention pos model.mentions) + 1) value
-
-        updateMentions =
-          let
-            position =
-              Maybe.withDefault (String.length value) model.currentMentionPos
-            updateMentions mention pos =
-              ( Dict.insert position mention model.mentions, Just pos )
-          in
-            case model.currentMentionPos of
-              Just pos ->
-                if String.endsWith " " value then
-                  ( Dict.remove pos model.mentions, Nothing )
-                else
-                  (AtMention.setValue (getNewMentionValue pos)) (getMention pos model.mentions)
-                    |> (\mention -> updateMentions mention pos )
-
-              Nothing ->
-                if String.endsWith "@" value then
-                  ( Dict.insert position AtMention.init model.mentions, Just position )
-                else
-                  ( model.mentions, model.currentMentionPos )
+        ( updatedMentions, updatedMentionPos ) = updateMentionValue model value
       in
         { model
           | value = value
-          , mentions = fst updateMentions
-          , currentMentionPos = snd updateMentions
+          , mentions = updatedMentions
+          , currentMentionPos = updatedMentionPos
         }
     ToggleMenu bool ->
       let
@@ -124,6 +98,35 @@ update action model =
             }
           Nothing ->
             model
+
+updateMentionValue : Model -> String -> ( Dict Position AtMention, Maybe Position )
+updateMentionValue model value =
+    let
+      getMentionLength mention =
+        AtMention.getValue mention
+          |> String.length
+
+      getNewMentionValue pos =
+        String.slice pos (pos + (getMentionLength <| getMention pos model.mentions) + 1) value
+
+      position =
+        Maybe.withDefault (String.length value) model.currentMentionPos
+      updateMentions mention pos =
+        ( Dict.insert position mention model.mentions, Just pos )
+    in
+      case model.currentMentionPos of
+        Just pos ->
+          if String.endsWith " " value then
+            ( Dict.remove pos model.mentions, Nothing )
+          else
+            (AtMention.setValue (getNewMentionValue pos)) (getMention pos model.mentions)
+              |> (\mention -> updateMentions mention pos )
+
+        Nothing ->
+          if String.endsWith "@" value then
+            ( Dict.insert position AtMention.init model.mentions, Just position )
+          else
+            ( model.mentions, model.currentMentionPos )
 
 getMention : Position -> Dict Position AtMention -> AtMention
 getMention pos mentions =
