@@ -1,7 +1,8 @@
 module Autocomplete.View exposing (viewMenu)
 
 import Autocomplete.DefaultStyles as DefaultStyles
-import Autocomplete.Update as Autocomplete exposing (Msg)
+import Autocomplete.Update as Autocomplete
+import Autocomplete.Msg as Autocomplete exposing (Msg)
 import Autocomplete.Model exposing (Model)
 import Autocomplete.Config exposing (Text, Index, InputValue)
 import Autocomplete.Styling as Styling
@@ -50,7 +51,7 @@ viewList model =
   let
     getItemView index item =
       if index == model.selectedItemIndex then
-        viewSelectedItem address model item
+        viewSelectedItem model item
       else
         viewItem model item index
   in

@@ -4,7 +4,7 @@ import Html exposing (Attribute)
 import Html.Attributes exposing (style)
 
 
-menuStyle : Attribute
+menuStyle : Attribute msg
 menuStyle =
   style
     [ ( "position", "absolute" )
@@ -20,7 +20,7 @@ menuStyle =
     ]
 
 
-selectedItemStyle : Attribute
+selectedItemStyle : Attribute msg
 selectedItemStyle =
   style
     [ ( "background", "#3366FF" )
@@ -32,7 +32,7 @@ selectedItemStyle =
     ]
 
 
-listStyle : Attribute
+listStyle : Attribute msg
 listStyle =
   style
     [ ( "list-style", "none" )
@@ -43,7 +43,7 @@ listStyle =
     ]
 
 
-itemStyle : Attribute
+itemStyle : Attribute msg
 itemStyle =
   style
     [ ( "display", "block" )
@@ -53,7 +53,7 @@ itemStyle =
     ]
 
 
-inputStyle : Attribute
+inputStyle : Attribute msg
 inputStyle =
   style
     [ ( "min-width", "120px" )

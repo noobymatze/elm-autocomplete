@@ -2,16 +2,7 @@ module Autocomplete.Update exposing (..)
 
 import Autocomplete.Model exposing (Model)
 import Autocomplete.Config exposing (Completed)
-
-
-{-| A description of a state change
--}
-type Msg
-  = Complete
-  | ChangeSelection Int
-  | ShowMenu Bool
-  | UpdateItems (List String)
-  | SetValue String
+import Autocomplete.Msg exposing (Msg (..))
 
 
 {-| The quintessential Elm Architecture reducer.

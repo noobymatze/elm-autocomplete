@@ -17,6 +17,7 @@ module Autocomplete.Config exposing (Config, ItemHtmlFn, Text, InputValue, Index
 import Html exposing (..)
 import String
 import Autocomplete.Styling as Styling
+import Autocomplete.Msg exposing (Msg)
 import Char exposing (KeyCode)
 
 
@@ -34,8 +35,8 @@ type alias Model =
   , maxListSize : Int
   , filterFn : Text -> InputValue -> Bool
   , compareFn : Text -> Text -> Order
-  , noMatchesDisplay : Html
-  , loadingDisplay : Html
+  , noMatchesDisplay : Html Msg
+  , loadingDisplay : Html Msg
   , isValueControlled : Bool
   }
 
@@ -43,7 +44,7 @@ type alias Model =
 {-| Given the text of an item, produce some HTML
 -}
 type alias ItemHtmlFn =
-  Text -> Html
+  Text -> Html Msg
 
 
 {-| The text of an item
@@ -124,14 +125,14 @@ setCompareFn compareFn config =
 
 {-| Provide a custom HTML display for the case that nothing matches.
 -}
-setNoMatchesDisplay : Html -> Config -> Config
+setNoMatchesDisplay : Html Msg -> Config -> Config
 setNoMatchesDisplay noMatchesDisplay config =
   { config | noMatchesDisplay = noMatchesDisplay }
 
 
 {-| Provide a custom loading display for the case when more items are being fetched
 -}
-setLoadingDisplay : Html -> Config -> Config
+setLoadingDisplay : Html Msg -> Config -> Config
 setLoadingDisplay loadingDisplay config =
   { config | loadingDisplay = loadingDisplay }
 

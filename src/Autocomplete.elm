@@ -1,4 +1,4 @@
-module Autocomplete exposing (Autocomplete, GetItemsTask, init, initWithConfig, Action, update, view, getSelectedItemText, getCurrentValue, showMenu, setValue, isComplete, MenuNavigation(Previous, Next, Select), navigateMenu)
+module Autocomplete exposing (Autocomplete, GetItemsTask, init, initWithConfig, Msg, update, view, getSelectedItemText, getCurrentValue, showMenu, setValue, isComplete, MenuNavigation(Previous, Next, Select), navigateMenu)
 
 {-| A customizable Autocomplete component.
 
@@ -18,7 +18,7 @@ of items upon every input or selection change.
 
 An example of plugging this into `StartApp`:
 ```
-fetchMoreItems : String -> Task Effects.Never (List String)
+fetchMoreItems : String -> Task never (List String)
 fetchMoreItems url =
   Http.url url []
     |> Http.getString
@@ -36,7 +36,7 @@ responseToItems maybeString =
       []
 
 
-getItemsTask : String -> Int -> Task Effects.Never (List String)
+getItemsTask : String -> Int -> Task never (List String)
 getItemsTask value index =
   fetchMoreItems "https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt"
 
@@ -73,7 +73,7 @@ The above example can be found in `example/src/RemoteExample.elm`.
 @docs init, initWithConfig
 
 # Update
-@docs Action, update
+@docs Msg, update
 
 # Views
 @docs view
@@ -90,13 +90,14 @@ import Autocomplete.Config as Config exposing (Config, Index, Text, InputValue, 
 import Autocomplete.DefaultStyles as DefaultStyles
 import Autocomplete.Model exposing (Model)
 import Autocomplete.Update as Autocomplete
+import Autocomplete.Msg as Autocomplete
 import Autocomplete.View exposing (viewMenu)
 import Html exposing (..)
+import Html.App
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Effects exposing (Effects)
 import Json.Decode as Json
-import Signal
+import Platform.Cmd as Cmd exposing (Cmd)
 import Task exposing (Task)
 import Autocomplete.Styling as Styling
 
@@ -116,46 +117,47 @@ type Autocomplete
 the input's value or selection index is changed.
 -}
 type alias GetItemsTask =
-  InputValue -> Index -> Task Effects.Never (List String)
+  InputValue -> Index -> Task Never (List String)
 
 
 {-| Creates an Autocomplete from a list of items with a default `String.startsWith` filter
 -}
-init : List String -> GetItemsTask -> ( Autocomplete, Effects Action )
+init : List String -> GetItemsTask -> ( Autocomplete, Cmd Msg )
 init items getItemsTask =
   ( Autocomplete
       { autocomplete = Autocomplete.Model.init items
       , getItemsTask = getItemsTask
       , showLoading = False
       }
-  , Effects.none
+  , Cmd.none
   )
 
 
 {-| Creates an Autocomplete with a custom configuration
 -}
-initWithConfig : List String -> GetItemsTask -> Config -> ( Autocomplete, Effects Action )
+initWithConfig : List String -> GetItemsTask -> Config -> ( Autocomplete, Cmd Msg )
 initWithConfig items getItemsTask config =
   ( Autocomplete
       { autocomplete = Autocomplete.Model.initWithConfig items config
       , getItemsTask = getItemsTask
       , showLoading = False
       }
-  , Effects.none
+  , Cmd.none
   )
 
 
 {-| A description of a state change
 -}
-type Action
-  = UpdateAutocomplete Autocomplete.Action
+type Msg
+  = UpdateAutocomplete Autocomplete.Msg
   | SetValue String
   | UpdateItems (List String)
+  | UpdateItemsFailed
 
 
 {-| The quintessential Elm Architecture reducer.
 -}
-update : Action -> Autocomplete -> ( Autocomplete, Effects Action, Completed )
+update : Msg -> Autocomplete -> ( Autocomplete, Cmd Msg, Completed )
 update action (Autocomplete model) =
   case action of
     UpdateAutocomplete act ->
@@ -166,9 +168,9 @@ update action (Autocomplete model) =
           Autocomplete { model | autocomplete = updatedModel }
       in
         if completed && not model.autocomplete.config.isValueControlled then
-           ( showMenu False updatedAutocomplete, Effects.none, completed )
+           ( showMenu False updatedAutocomplete, Cmd.none, completed )
         else
-          ( updatedAutocomplete, Effects.none, completed )
+          ( updatedAutocomplete, Cmd.none, completed )
 
     SetValue value ->
       let
@@ -191,32 +193,35 @@ update action (Autocomplete model) =
               | autocomplete = updatedModel
               , showLoading = False
             }
-        , Effects.none
+        , Cmd.none
         , completed
         )
+
+    UpdateItemsFailed ->
+      ( Autocomplete model, Cmd.none, False )
 
 
 {-| The full Autocomplete view, with menu and input.
     Needs a Signal.Address and Autocomplete (typical of the Elm Architecture).
 -}
-view : Signal.Address Action -> Autocomplete -> Html
-view address (Autocomplete model) =
+view : Autocomplete -> Html Msg
+view (Autocomplete model) =
   div
-    [ onBlur (Signal.forwardTo address UpdateAutocomplete) (Autocomplete.ShowMenu False) ]
-    [ viewInput address (Autocomplete model)
+    [ onBlur (UpdateAutocomplete (Autocomplete.ShowMenu False)) ]
+    [ viewInput (Autocomplete model)
     , if not model.autocomplete.showMenu then
         div [] []
       else if model.showLoading then
-        model.autocomplete.config.loadingDisplay
+        Html.App.map UpdateAutocomplete model.autocomplete.config.loadingDisplay
       else if List.isEmpty model.autocomplete.matches then
-        model.autocomplete.config.noMatchesDisplay
+        Html.App.map UpdateAutocomplete model.autocomplete.config.noMatchesDisplay
       else
-        viewMenu (Signal.forwardTo address UpdateAutocomplete) model.autocomplete
+        Html.App.map UpdateAutocomplete (viewMenu model.autocomplete)
     ]
 
 
-viewInput : Signal.Address Action -> Autocomplete -> Html
-viewInput address (Autocomplete model) =
+viewInput : Autocomplete -> Html Msg
+viewInput (Autocomplete model) =
   let
     options =
       { preventDefault = True, stopPropagation = False }
@@ -226,7 +231,7 @@ viewInput address (Autocomplete model) =
         keyCode
         (\k ->
           if List.member k (List.append [ 38, 40 ] model.autocomplete.config.completionKeyCodes) then
-            Ok k
+            Ok (handleKeyDown k)
           else
             Err "not handling that key"
         )
@@ -247,9 +252,9 @@ viewInput address (Autocomplete model) =
   in
     input
       [ type' "text"
-      , on "input" targetValue (Signal.message address << SetValue)
-      , onWithOptions "keydown" options dec (\code -> Signal.message address <| handleKeyDown code)
-      , onFocus address (UpdateAutocomplete (Autocomplete.ShowMenu True))
+      , on "input" dec
+      , onWithOptions "keydown" options dec
+      , onFocus (UpdateAutocomplete (Autocomplete.ShowMenu True))
       , value model.autocomplete.value
       , if model.autocomplete.config.useDefaultStyles then
           DefaultStyles.inputStyle
@@ -263,14 +268,14 @@ viewInput address (Autocomplete model) =
 -- Effects
 
 
-getMoreItems : String -> Autocomplete -> Effects Action
+getMoreItems : String -> Autocomplete -> Cmd Msg
 getMoreItems value (Autocomplete model) =
   model.getItemsTask value model.autocomplete.selectedItemIndex
     |> Task.map UpdateItems
-    |> Effects.task
+    |> Task.perform (always UpdateItemsFailed) identity
 
 
-updateInputValue : String -> Autocomplete -> ( Autocomplete, Effects Action, Completed )
+updateInputValue : String -> Autocomplete -> ( Autocomplete, Cmd Msg, Completed )
 updateInputValue value (Autocomplete model) =
   let
     ( updatedModel, completed ) =
@@ -281,7 +286,7 @@ updateInputValue value (Autocomplete model) =
           { model
             | autocomplete = updatedModel
           }
-      , Effects.none
+      , Cmd.none
       , completed
       )
     else
@@ -342,7 +347,7 @@ type MenuNavigation
 {-| When controlling the Autocomplete value, use this function
     to provide an action for updating the menu selection.
 -}
-navigateMenu : MenuNavigation -> Autocomplete -> Action
+navigateMenu : MenuNavigation -> Autocomplete -> Msg
 navigateMenu navigation (Autocomplete model) =
   case navigation of
     Previous ->
