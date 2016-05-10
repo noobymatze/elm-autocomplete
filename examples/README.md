@@ -16,13 +16,11 @@ A simple, styled example: `./src/StyledExample.elm`.
 
 To build: `make styled`
 
-
 #### HTTP
 
 An HTTP fetching example: `./src/RemoteExample.elm`
 
 To build: `make remote`
-
 
 #### Typeahead Example
 
@@ -42,4 +40,12 @@ Or, any of these without `make`:
 
 ## Run it
 
-After building one of these, simply open `example.html` in your favorite browser!
+After building one of these, except the mentions example, simply open `example.html` in your favorite browser!
+
+Open `mention-example.html` in your browser to run the mentions example.
+
+### TODO
+
+- [] Make examples hot reloadable with elm-live
+- [] Improve this build process
+- [] Make the Mention example better and more robust
