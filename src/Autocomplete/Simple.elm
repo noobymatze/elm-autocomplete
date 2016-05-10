@@ -1,6 +1,7 @@
-module Autocomplete.Simple exposing (Autocomplete, init, initWithConfig, Action, update, view, getSelectedItemText, getCurrentValue, showMenu, setValue, isComplete, MenuNavigation(Previous, Next, Select), navigateMenu)
+module Autocomplete.Simple exposing (Autocomplete, init, initWithConfig, Msg, update, view, getSelectedItemText, getCurrentValue, showMenu, setValue, isComplete, MenuNavigation(Previous, Next, Select), navigateMenu)
 
 {-| A customizable Autocomplete component.
+
 
 This Autocomplete has a static list of items. See the Autocomplete module for maintaining a dynamic list of items.
 
@@ -30,7 +31,7 @@ main =
 @docs init, initWithConfig
 
 # Update
-@docs Action, update
+@docs Msg, update
 
 # Views
 @docs view
@@ -49,11 +50,12 @@ import Autocomplete.Styling as Styling
 import Autocomplete.Model exposing (Model)
 import Autocomplete.View exposing (viewMenu)
 import Autocomplete.Update as Autocomplete
+import Autocomplete.Msg as Autocomplete
 import Html exposing (..)
+import Html.App as HtmlApp
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Json.Decode as Json
-import Signal exposing (..)
 
 
 {-| The Autocomplete model.
@@ -65,8 +67,8 @@ type Autocomplete
 
 {-| A description of a state change
 -}
-type Action
-  = UpdateAutocomplete Autocomplete.Action
+type Msg
+  = UpdateAutocomplete Autocomplete.Msg
   | SetValue String
 
 
@@ -88,7 +90,7 @@ initWithConfig items config =
 
 {-| The quintessential Elm Architecture reducer.
 -}
-update : Action -> Autocomplete -> ( Autocomplete, Completed )
+update : Msg -> Autocomplete -> ( Autocomplete, Completed )
 update action (Autocomplete model) =
   case action of
     UpdateAutocomplete act ->
@@ -114,25 +116,25 @@ update action (Autocomplete model) =
 {-| The full Autocomplete view, with menu and input.
     Needs a Signal.Address and Autocomplete (typical of the Elm Architecture).
 -}
-view : Address Action -> Autocomplete -> Html
-view address (Autocomplete model) =
+view : Autocomplete -> Html Msg
+view (Autocomplete model) =
   div
-    [ onBlur address (UpdateAutocomplete (Autocomplete.ShowMenu False)) ]
+    [ onBlur (UpdateAutocomplete (Autocomplete.ShowMenu False)) ]
     [ if model.config.isValueControlled then
         div [] []
       else
-        viewInput address model
+        viewInput model
     , if not model.showMenu then
         div [] []
       else if List.isEmpty model.matches then
-        model.config.noMatchesDisplay
+        HtmlApp.map UpdateAutocomplete model.config.noMatchesDisplay
       else
-        viewMenu (Signal.forwardTo address UpdateAutocomplete) model
+        HtmlApp.map UpdateAutocomplete (viewMenu model)
     ]
 
 
-viewInput : Address Action -> Model -> Html
-viewInput address model =
+viewInput : Model -> Html Msg
+viewInput model =
   let
     options =
       { preventDefault = True, stopPropagation = False }
@@ -142,7 +144,7 @@ viewInput address model =
         keyCode
         (\k ->
           if List.member k (List.append [ 38, 40 ] model.config.completionKeyCodes) then
-            Ok k
+            Ok (navigate k)
           else
             Err "not handling that key"
         )
@@ -161,13 +163,9 @@ viewInput address model =
   in
     input
       [ type' "text"
-      , on "input" targetValue (Signal.message address << SetValue)
-      , onWithOptions
-          "keydown"
-          options
-          dec
-          (\code -> Signal.message address <| navigate code)
-      , onFocus address (UpdateAutocomplete (Autocomplete.ShowMenu True))
+      , on "input" dec
+      , onWithOptions "keydown" options dec
+      , onFocus (UpdateAutocomplete (Autocomplete.ShowMenu True))
       , value model.value
       , if model.config.useDefaultStyles then
           DefaultStyles.inputStyle
@@ -210,7 +208,7 @@ type MenuNavigation
 {-| When controlling the Autocomplete value, use this function
     to provide an action for updating the menu selection.
 -}
-navigateMenu : MenuNavigation -> Autocomplete -> Action
+navigateMenu : MenuNavigation -> Autocomplete -> Msg
 navigateMenu navigation (Autocomplete model) =
   case navigation of
     Previous ->
