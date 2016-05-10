@@ -1,59 +1,58 @@
 module Autocomplete.View exposing (viewMenu)
 
 import Autocomplete.DefaultStyles as DefaultStyles
-import Autocomplete.Update as Autocomplete exposing (Action)
+import Autocomplete.Update as Autocomplete exposing (Msg)
 import Autocomplete.Model exposing (Model)
 import Autocomplete.Config exposing (Text, Index, InputValue)
 import Autocomplete.Styling as Styling
 import Html exposing (..)
 import Html.Attributes exposing (classList)
 import Html.Events exposing (..)
-import Signal exposing (Address)
 
 
-viewItem : Address Action -> Model -> Text -> Index -> Html
-viewItem address model item index =
+viewItem : Model -> Text -> Index -> Html Msg
+viewItem model item index =
   li
     [ if model.config.useDefaultStyles then
         DefaultStyles.itemStyle
       else
         classList <| model.config.getClasses Styling.Item
-    , onMouseEnter address (Autocomplete.ChangeSelection index)
+    , onMouseEnter (Autocomplete.ChangeSelection index)
     ]
     [ model.config.itemHtmlFn item ]
 
 
-viewSelectedItem : Address Action -> Model -> Text -> Html
-viewSelectedItem address model item =
+viewSelectedItem : Model -> Text -> Html Msg
+viewSelectedItem model item =
   li
     [ if model.config.useDefaultStyles then
         DefaultStyles.selectedItemStyle
       else
         classList <| model.config.getClasses Styling.SelectedItem
-    , onClick address Autocomplete.Complete
+    , onClick Autocomplete.Complete
     ]
     [ model.config.itemHtmlFn item ]
 
 
-viewMenu : Address Action -> Model -> Html
-viewMenu address model =
+viewMenu : Model -> Html Msg
+viewMenu model =
   div
     [ if model.config.useDefaultStyles then
         DefaultStyles.menuStyle
       else
         classList <| model.config.getClasses Styling.Menu
     ]
-    [ viewList address model ]
+    [ viewList model ]
 
 
-viewList : Address Action -> Model -> Html
-viewList address model =
+viewList : Model -> Html Msg
+viewList model =
   let
     getItemView index item =
       if index == model.selectedItemIndex then
         viewSelectedItem address model item
       else
-        viewItem address model item index
+        viewItem model item index
   in
     ul
       [ if model.config.useDefaultStyles then

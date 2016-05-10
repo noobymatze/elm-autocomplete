@@ -6,7 +6,7 @@ import Autocomplete.Config exposing (Completed)
 
 {-| A description of a state change
 -}
-type Action
+type Msg
   = Complete
   | ChangeSelection Int
   | ShowMenu Bool
@@ -16,7 +16,7 @@ type Action
 
 {-| The quintessential Elm Architecture reducer.
 -}
-update : Action -> Model -> ( Model, Completed )
+update : Msg -> Model -> ( Model, Completed )
 update action model =
   case action of
     Complete ->
