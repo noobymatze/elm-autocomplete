@@ -1,4 +1,4 @@
-module Autocomplete.DefaultStyles (..) where
+module Autocomplete.DefaultStyles exposing (..)
 
 import Html exposing (Attribute)
 import Html.Attributes exposing (style)

@@ -1,4 +1,4 @@
-module Autocomplete.Model (Model, init, initWithConfig) where
+module Autocomplete.Model exposing (Model, init, initWithConfig)
 
 import Autocomplete.Config as Config exposing (Config, Text, Index, InputValue)
 

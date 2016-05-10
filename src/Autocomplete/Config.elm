@@ -1,4 +1,4 @@
-module Autocomplete.Config (Config, ItemHtmlFn, Text, InputValue, Index, Completed, defaultConfig, isValueControlled, setClassesFn, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay) where
+module Autocomplete.Config exposing (Config, ItemHtmlFn, Text, InputValue, Index, Completed, defaultConfig, isValueControlled, setClassesFn, setCompletionKeyCodes, setItemHtml, setMaxListSize, setFilterFn, setCompareFn, setNoMatchesDisplay, setLoadingDisplay)
 
 {-| Configuration module for the Autocomplete component.
 

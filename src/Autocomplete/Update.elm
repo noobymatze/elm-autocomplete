@@ -1,4 +1,4 @@
-module Autocomplete.Update (..) where
+module Autocomplete.Update exposing (..)
 
 import Autocomplete.Model exposing (Model)
 import Autocomplete.Config exposing (Completed)

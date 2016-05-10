@@ -1,4 +1,4 @@
-module Autocomplete.View (viewMenu) where
+module Autocomplete.View exposing (viewMenu)
 
 import Autocomplete.DefaultStyles as DefaultStyles
 import Autocomplete.Update as Autocomplete exposing (Action)
