@@ -29,3 +29,7 @@ You can either keep with the Github mention style defaults:
 Or craft your own styles:
 
 ![typeahead-elm](https://cloud.githubusercontent.com/assets/3099999/15311152/aacb0746-1bac-11e6-9e2f-b4c30cc90345.gif)
+
+Or, control it within a textarea / contenteditable:
+
+![mentions](http://g.recordit.co/NIqgZm5zs6.gif)
