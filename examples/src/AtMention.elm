@@ -1,10 +1,10 @@
-module AtMention (..) where
+module AtMention exposing (..)
 
 import Autocomplete.Config
-import Autocomplete.Simple as Autocomplete exposing (Autocomplete)
+import Autocomplete exposing (Autocomplete)
 import Autocomplete.Styling as Styling
 import Html exposing (..)
-
+import Html.App exposing (map)
 
 people : List String
 people =
@@ -57,57 +57,52 @@ init =
   }
 
 
-type Action
-  = NoOp
-  | Autocomplete Autocomplete.Action
+type Msg
+  = Autocomplete Autocomplete.Msg
   | SetValue String
   | ShowMenu Bool
   | NavigateMenu Autocomplete.MenuNavigation
 
 
-type alias Completed =
-  Bool
-
-
-update : Action -> AtMention -> ( AtMention, Completed )
-update action model =
-  case action of
-    NoOp ->
-      ( model, False )
-
-    Autocomplete act ->
+update : Msg -> AtMention -> ( AtMention, Autocomplete.Status )
+update msg model =
+  case msg of
+    Autocomplete autoMsg ->
       let
-        ( updatedAutocomplete, completed ) =
-          Autocomplete.update act model.autocomplete
+        ( updatedAutocomplete, status ) =
+          Autocomplete.update autoMsg model.autocomplete
       in
         ( { model
             | autocomplete = updatedAutocomplete
             , value = Autocomplete.getCurrentValue updatedAutocomplete
           }
-        , completed
+        , status
         )
 
     SetValue value ->
-      ( setValue value model, False )
+      let
+        defaultStatus = Autocomplete.defaultStatus
+      in
+      ( setValue value model,  { defaultStatus | valueChanged = True } )
 
     ShowMenu bool ->
-      ( showMenu bool model, False )
+      ( showMenu bool model, Autocomplete.defaultStatus )
 
     NavigateMenu navigation ->
       navigateMenu navigation model
 
 
-navigateMenu : Autocomplete.MenuNavigation -> AtMention -> ( AtMention, Completed )
+navigateMenu : Autocomplete.MenuNavigation -> AtMention -> ( AtMention, Autocomplete.Status )
 navigateMenu navigation model =
   let
-    navAction =
+    navMsg =
       Autocomplete.navigateMenu navigation model.autocomplete
 
-    ( navigatedAuto, completed ) =
-      Autocomplete.update navAction model.autocomplete
+    ( navigatedAuto, status ) =
+      Autocomplete.update navMsg model.autocomplete
 
     updatedAutocomplete =
-      if completed then
+      if status.completed then
         Autocomplete.showMenu False navigatedAuto
       else
         navigatedAuto
@@ -116,7 +111,7 @@ navigateMenu navigation model =
         | autocomplete = updatedAutocomplete
         , value = Autocomplete.getCurrentValue updatedAutocomplete
       }
-    , completed
+    , status
     )
 
 
@@ -135,6 +130,6 @@ getValue model =
   model.value
 
 
-view : Signal.Address Action -> AtMention -> Html
-view address model =
-  Autocomplete.view (Signal.forwardTo address Autocomplete) model.autocomplete
+view : AtMention -> Html Msg
+view model =
+  map Autocomplete (Autocomplete.view model.autocomplete)

@@ -1,222 +1,233 @@
-module Autocomplete (Autocomplete, GetItemsTask, init, initWithConfig, Action, update, view, getSelectedItemText, getCurrentValue, showMenu, setValue, isComplete, MenuNavigation(Previous, Next, Select), navigateMenu) where
+module Autocomplete exposing (Autocomplete, Status, init, initWithConfig, Msg, update, view, getSelectedItem, getCurrentValue, showMenu, setValue, isComplete, setItems, setLoading, MenuNavigation(Previous, Next, Select), navigateMenu, defaultStatus)
 
 {-| A customizable Autocomplete component.
 
-This Autocomplete has a dynamic list of items.
-See the `Autocomplete.Simple` module for using a simple, static list of items.
-
 The Autocomplete consists of a menu, a list, the list's many items, and an input.
 All of these views are styleable via css classes.
-See the `Autocomplete.Styling` module.
+See the Styling module.
 
 The currently selected item is preserved and styled with the aforementioned module.
 
 This selection is modified by keyboard arrow input, mouse clicks, and API consumer defined keyCodes.
 
-This Autocomplete calls a API consumer-defined function that returns a refreshed list
-of items upon every input or selection change.
-
-An example of plugging this into `StartApp`:
+Check out how easy it is to plug into a simple program:
 ```
-fetchMoreItems : String -> Task Effects.Never (List String)
-fetchMoreItems url =
-  Http.url url []
-    |> Http.getString
-    |> Task.toMaybe
-    |> Task.map responseToItems
-
-
-responseToItems : Maybe String -> List String
-responseToItems maybeString =
-  case maybeString of
-    Just string ->
-      String.lines string
-
-    Nothing ->
-      []
-
-
-getItemsTask : String -> Int -> Task Effects.Never (List String)
-getItemsTask value index =
-  fetchMoreItems "https://raw.githubusercontent.com/first20hours/google-10000-english/master/20k.txt"
-
-
-app =
-  let
-    config =
-      Autocomplete.Config.defaultConfig
-        |> Autocomplete.Config.setLoadingDisplay (img [ src "assets/loading.svg" ] [])
-  in
-    StartApp.start
-      { init = Autocomplete.initWithConfig [] getItemsTask config
-      , update = Autocomplete.update
-      , view = Autocomplete.view
-      , inputs = []
-      }
-
-
 main =
-  app.html
-
-
-port tasks : Signal (Task.Task Never ())
-port tasks =
-  app.tasks
+  Html.beginnerProgram
+    { model = Autocomplete.init [ "elm", "makes", "coding", "life", "easy" ]
+    , update = Autocomplete.update
+    , view = Autocomplete.view
+    }
 ```
-
-The above example can be found in `example/src/RemoteExample.elm`.
 
 # Definition
-@docs Autocomplete, GetItemsTask
+@docs Autocomplete, Status
 
 # Initialize
 @docs init, initWithConfig
 
 # Update
-@docs Action, update
+@docs Msg, update
 
 # Views
 @docs view
 
 # Helpers
-@docs getSelectedItemText, getCurrentValue
+@docs getSelectedItem, getCurrentValue
 
 # Controlling Behavior
-@docs showMenu, setValue, isComplete, MenuNavigation, navigateMenu
+@docs showMenu, setValue, isComplete, setItems, setLoading, MenuNavigation, navigateMenu
+
+# Defaults
+@docs defaultStatus
 
 -}
 
-import Autocomplete.Config as Config exposing (Config, Index, Text, InputValue, Completed)
+import Autocomplete.Config as Config exposing (Config, Text, Index, InputValue, Completed, ValueChanged, SelectionChanged)
 import Autocomplete.DefaultStyles as DefaultStyles
-import Autocomplete.Model exposing (Model)
-import Autocomplete.Update as Autocomplete
-import Autocomplete.View exposing (viewMenu)
+import Autocomplete.Styling as Styling
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Effects exposing (Effects)
 import Json.Decode as Json
-import Signal
-import Task exposing (Task)
-import Autocomplete.Styling as Styling
 
 
 {-| The Autocomplete model.
     It assumes filtering is based upon strings.
 -}
 type Autocomplete
-  = Autocomplete
-      { autocomplete : Model
-      , getItemsTask : GetItemsTask
-      , showLoading : Bool
-      }
+  = Autocomplete Model
 
+type alias Model =
+  { value : InputValue
+  , items : List Text
+  , matches : List Text
+  , selectedItemIndex : Index
+  , showMenu : Bool
+  , isLoading : Bool
+  , config : Config Msg
+  }
 
-{-| Consumer defined function that is used to retrieve more items. Called when either
-the input's value or selection index is changed.
+{-| Information for parent components about the update of the Autocomplete -}
+type alias Status =
+  { completed : Completed
+  , valueChanged : ValueChanged
+  , selectionChanged : SelectionChanged
+  }
+
+{-| A description of a state change
 -}
-type alias GetItemsTask =
-  InputValue -> Index -> Task Effects.Never (List String)
+type Msg
+  = Complete
+  | ChangeSelection Int
+  | ShowMenu Bool
+  | UpdateItems (List String)
+  | SetValue String
+  | SetLoading Bool
 
 
 {-| Creates an Autocomplete from a list of items with a default `String.startsWith` filter
 -}
-init : List String -> GetItemsTask -> ( Autocomplete, Effects Action )
-init items getItemsTask =
-  ( Autocomplete
-      { autocomplete = Autocomplete.Model.init items
-      , getItemsTask = getItemsTask
-      , showLoading = False
-      }
-  , Effects.none
-  )
+init : List String -> Autocomplete
+init items =
+  Autocomplete
+    { value = ""
+    , items = items
+    , matches = items
+    , selectedItemIndex = 0
+    , showMenu = False
+    , config = Config.defaultConfig
+    , isLoading = False
+    }
 
 
 {-| Creates an Autocomplete with a custom configuration
 -}
-initWithConfig : List String -> GetItemsTask -> Config -> ( Autocomplete, Effects Action )
-initWithConfig items getItemsTask config =
-  ( Autocomplete
-      { autocomplete = Autocomplete.Model.initWithConfig items config
-      , getItemsTask = getItemsTask
-      , showLoading = False
-      }
-  , Effects.none
-  )
-
-
-{-| A description of a state change
--}
-type Action
-  = UpdateAutocomplete Autocomplete.Action
-  | SetValue String
-  | UpdateItems (List String)
+initWithConfig : List String -> Config.Config Msg -> Autocomplete
+initWithConfig items config =
+  Autocomplete
+    { value = ""
+    , items = items
+    , matches = items
+    , selectedItemIndex = 0
+    , showMenu = False
+    , isLoading = False
+    , config = config
+    }
 
 
 {-| The quintessential Elm Architecture reducer.
 -}
-update : Action -> Autocomplete -> ( Autocomplete, Effects Action, Completed )
-update action (Autocomplete model) =
-  case action of
-    UpdateAutocomplete act ->
-      let
-        ( updatedModel, completed ) =
-          Autocomplete.update act model.autocomplete
-        updatedAutocomplete =
-          Autocomplete { model | autocomplete = updatedModel }
-      in
-        if completed && not model.autocomplete.config.isValueControlled then
-           ( showMenu False updatedAutocomplete, Effects.none, completed )
-        else
-          ( updatedAutocomplete, Effects.none, completed )
+update : Msg -> Autocomplete-> ( Autocomplete, Status )
+update msg auto =
+  updateAutocomplete msg auto
+    |> toggleMenu
 
-    SetValue value ->
-      let
-          ( auto, effects, completed ) =
-            updateInputValue value (Autocomplete model)
-      in
-          if not model.autocomplete.config.isValueControlled then
-             ( showMenu True auto, effects, completed )
-          else
-            ( auto, effects, completed )
+updateAutocomplete : Msg -> Autocomplete -> ( Autocomplete, Status )
+updateAutocomplete msg (Autocomplete model) =
+  updateModel msg model
+    |> makeOpaque
 
+updateModel : Msg -> Model -> ( Model, Status )
+updateModel msg model =
+  case msg of
+    Complete ->
+      let
+        selectedItem =
+          List.drop model.selectedItemIndex model.matches
+            |> List.head
+      in
+        case selectedItem of
+          Just item ->
+            ( { model | value = item }, { defaultStatus | completed = True, valueChanged = True } )
+
+          Nothing ->
+            ( model, { defaultStatus | completed = True } )
+
+    ChangeSelection newIndex ->
+      let
+        boundedNewIndex =
+          Basics.max newIndex 0
+            |> Basics.min ((List.length model.matches) - 1)
+            |> Basics.min (model.config.maxListSize - 1)
+      in
+        ( { model | selectedItemIndex = boundedNewIndex }, { defaultStatus | selectionChanged = True } )
+
+    ShowMenu bool ->
+      ( { model | showMenu = bool }, defaultStatus )
 
     UpdateItems items ->
-      let
-        ( updatedModel, completed ) =
-          Autocomplete.update (Autocomplete.UpdateItems items) model.autocomplete
-      in
-        ( Autocomplete
-            { model
-              | autocomplete = updatedModel
-              , showLoading = False
-            }
-        , Effects.none
-        , completed
+      ( { model
+          | items = items
+          , matches =
+              List.filter (\item -> model.config.filterFn item model.value) model.items
+                |> List.sortWith model.config.compareFn
+        }
+      , defaultStatus
+      )
+
+    SetValue value ->
+      if value == "" then
+        ( { model
+            | value = value
+            , matches =
+                model.items
+                  |> List.sortWith model.config.compareFn
+            , selectedItemIndex = 0
+          }
+        , { defaultStatus | valueChanged = True }
+        )
+      else
+        ( { model
+            | value = value
+            , matches =
+                List.filter (\item -> model.config.filterFn item value) model.items
+                  |> List.sortWith model.config.compareFn
+            , selectedItemIndex = 0
+          }
+        , { defaultStatus | valueChanged = True }
         )
 
+    SetLoading bool ->
+      ( { model | isLoading = bool }, defaultStatus )
+
+toggleMenu : ( Autocomplete, Status ) -> (Autocomplete, Status )
+toggleMenu ( Autocomplete model, status ) =
+  if model.config.isValueControlled then
+    ( Autocomplete model, status )
+  else if status.completed then
+     ( showMenu False (Autocomplete model), status )
+  else
+     ( showMenu True (Autocomplete model), status )
+
+
+makeOpaque : ( Model, Status ) -> ( Autocomplete, Status)
+makeOpaque (model, status)=
+  ( Autocomplete model, status )
 
 {-| The full Autocomplete view, with menu and input.
-    Needs a Signal.Address and Autocomplete (typical of the Elm Architecture).
 -}
-view : Signal.Address Action -> Autocomplete -> Html
-view address (Autocomplete model) =
+view : Autocomplete -> Html Msg
+view  (Autocomplete model) =
   div
-    [ onBlur (Signal.forwardTo address UpdateAutocomplete) (Autocomplete.ShowMenu False) ]
-    [ viewInput address (Autocomplete model)
-    , if not model.autocomplete.showMenu then
+    [ onBlur  (ShowMenu False) ]
+    [ if model.config.isValueControlled then
         div [] []
-      else if model.showLoading then
-        model.autocomplete.config.loadingDisplay
-      else if List.isEmpty model.autocomplete.matches then
-        model.autocomplete.config.noMatchesDisplay
       else
-        viewMenu (Signal.forwardTo address UpdateAutocomplete) model.autocomplete
+        viewInput  model
+    , if not model.showMenu then
+        div [] []
+      else if model.isLoading then
+        model.config.loadingDisplay
+      else if List.isEmpty model.matches then
+        model.config.noMatchesDisplay
+      else
+        viewMenu model
     ]
 
 
-viewInput : Signal.Address Action -> Autocomplete -> Html
-viewInput address (Autocomplete model) =
+viewInput : Model -> Html Msg
+viewInput  model =
   let
     options =
       { preventDefault = True, stopPropagation = False }
@@ -224,82 +235,84 @@ viewInput address (Autocomplete model) =
     dec =
       (Json.customDecoder
         keyCode
-        (\k ->
-          if List.member k (List.append [ 38, 40 ] model.autocomplete.config.completionKeyCodes) then
-            Ok k
-          else
-            Err "not handling that key"
+        (\code ->
+            if code == 38 then
+              Ok (navigateMenu Previous (Autocomplete model))
+            else if code == 40 then
+              Ok (navigateMenu Next (Autocomplete model))
+            else if List.member code model.config.completionKeyCodes then
+              Ok (navigateMenu Select (Autocomplete model))
+            else
+              Err "not handling that key"
         )
       )
-
-    handleKeyDown code =
-      case code of
-        38 ->
-          UpdateAutocomplete
-            <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex - 1)
-
-        40 ->
-          UpdateAutocomplete
-            <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex + 1)
-
-        _ ->
-          UpdateAutocomplete Autocomplete.Complete
   in
     input
       [ type' "text"
-      , on "input" targetValue (Signal.message address << SetValue)
-      , onWithOptions "keydown" options dec (\code -> Signal.message address <| handleKeyDown code)
-      , onFocus address (UpdateAutocomplete (Autocomplete.ShowMenu True))
-      , value model.autocomplete.value
-      , if model.autocomplete.config.useDefaultStyles then
-          DefaultStyles.inputStyle
+      , onInput SetValue
+      , onWithOptions "keydown" options dec
+      , onFocus (ShowMenu True)
+      , value model.value
+      , if model.config.useDefaultStyles then
+          style DefaultStyles.inputStyles
         else
-          classList <| model.autocomplete.config.getClasses Styling.Input
+          classList <| model.config.getClasses Styling.Input
       ]
       []
 
 
+viewItem : Model -> Text -> Index -> Html Msg
+viewItem  model item index =
+  li
+    [ if model.config.useDefaultStyles then
+        style DefaultStyles.itemStyles
+      else
+        classList <| model.config.getClasses Styling.Item
+    , onMouseEnter (ChangeSelection index)
+    ]
+    [ model.config.itemHtmlFn item ]
 
--- Effects
+
+viewSelectedItem : Model -> Text -> Html Msg
+viewSelectedItem  model item =
+  li
+    [ if model.config.useDefaultStyles then
+        style DefaultStyles.selectedItemStyles
+      else
+        classList <| model.config.getClasses Styling.SelectedItem
+    , onClick Complete
+    ]
+    [ model.config.itemHtmlFn item ]
 
 
-getMoreItems : String -> Autocomplete -> Effects Action
-getMoreItems value (Autocomplete model) =
-  model.getItemsTask value model.autocomplete.selectedItemIndex
-    |> Task.map UpdateItems
-    |> Effects.task
+viewMenu : Model -> Html Msg
+viewMenu model =
+  div
+    [ if model.config.useDefaultStyles then
+        style DefaultStyles.menuStyles
+      else
+        classList <| model.config.getClasses Styling.Menu
+    ]
+    [ viewList  model ]
 
 
-updateInputValue : String -> Autocomplete -> ( Autocomplete, Effects Action, Completed )
-updateInputValue value (Autocomplete model) =
+viewList : Model -> Html Msg
+viewList  model =
   let
-    ( updatedModel, completed ) =
-      Autocomplete.update (Autocomplete.SetValue value) model.autocomplete
+    getItemView index item =
+      if index == model.selectedItemIndex then
+        viewSelectedItem model item
+      else
+        viewItem model item index
   in
-    if value == "" then
-      ( Autocomplete
-          { model
-            | autocomplete = updatedModel
-          }
-      , Effects.none
-      , completed
-      )
-    else
-      let
-        showLoading =
-          if List.isEmpty updatedModel.matches then
-            True
-          else
-            False
-      in
-        ( Autocomplete
-            { model
-              | autocomplete = updatedModel
-              , showLoading = showLoading
-            }
-        , getMoreItems value (Autocomplete model)
-        , completed
-        )
+    ul
+      [ if model.config.useDefaultStyles then
+          style DefaultStyles.listStyles
+        else
+          classList <| model.config.getClasses Styling.List
+      ]
+      (List.indexedMap getItemView model.matches)
+
 
 -- CONTROL FUNCTIONS
 
@@ -307,29 +320,34 @@ updateInputValue value (Autocomplete model) =
 -}
 showMenu : Bool -> Autocomplete -> Autocomplete
 showMenu bool auto =
-  let
-    (auto, effects, completed) =
-      update (UpdateAutocomplete (Autocomplete.ShowMenu bool)) auto
-  in
-    auto
+  fst (updateAutocomplete (ShowMenu bool) auto)
 
 
 {-| Set current autocomplete value
 -}
 setValue : String -> Autocomplete -> Autocomplete
 setValue value auto =
-  let
-    (auto, effects, completed) =
-      update (SetValue value) auto
-  in
-    auto
+  fst (updateAutocomplete (SetValue value) auto)
 
 
 {-| Returns true if Autocomplete matches an item exactly
 -}
 isComplete : Autocomplete -> Bool
 isComplete (Autocomplete model) =
-  List.member model.autocomplete.value model.autocomplete.items
+  List.member model.value model.items
+
+
+{-| Sets the Autocomplete's list of items -}
+setItems : List String -> Autocomplete -> Autocomplete
+setItems items auto =
+  fst (updateAutocomplete (UpdateItems items) auto)
+
+
+{-| Sets whether the Autocomplete shows its loading display or not. Useful for remote updates. -}
+setLoading : Bool -> Autocomplete -> Autocomplete
+setLoading bool auto =
+  fst (update (SetLoading bool) auto)
+
 
 {-| The possible actions to navigate the autocomplete menu
 -}
@@ -340,46 +358,53 @@ type MenuNavigation
 
 
 {-| When controlling the Autocomplete value, use this function
-    to provide an action for updating the menu selection.
+    to provide a message for updating the menu selection.
 -}
-navigateMenu : MenuNavigation -> Autocomplete -> Action
+navigateMenu : MenuNavigation -> Autocomplete -> Msg
 navigateMenu navigation (Autocomplete model) =
   case navigation of
     Previous ->
-      UpdateAutocomplete
-        <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex - 1)
+      ChangeSelection (model.selectedItemIndex - 1)
 
     Next ->
-      UpdateAutocomplete
-        <| Autocomplete.ChangeSelection (model.autocomplete.selectedItemIndex + 1)
+      ChangeSelection (model.selectedItemIndex + 1)
 
     Select ->
-      UpdateAutocomplete Autocomplete.Complete
+      Complete
 
 
 -- HELPERS
 
-
-getSelectedItem : Autocomplete -> Maybe String
-getSelectedItem (Autocomplete model) =
-  List.drop model.autocomplete.selectedItemIndex model.autocomplete.matches
-    |> List.head
-
-
 {-| Get the text of the currently selected item
 -}
-getSelectedItemText : Autocomplete -> Text
-getSelectedItemText (Autocomplete model) =
-  case getSelectedItem <| (Autocomplete model) of
-    Just item ->
-      item
+getSelectedItem : Autocomplete -> Text
+getSelectedItem (Autocomplete model) =
+  let
+    maybeSelectedItem = List.drop model.selectedItemIndex model.matches
+      |> List.head
+  in
+    case maybeSelectedItem of
+      Just item ->
+        item
 
-    Nothing ->
-      model.autocomplete.value
+      Nothing ->
+        model.value
 
 
 {-| Get the string currently entered by the user in the Autocomplete
 -}
 getCurrentValue : Autocomplete -> String
 getCurrentValue (Autocomplete model) =
-  model.autocomplete.value
+  model.value
+
+
+-- DEFAULTS
+
+{-| A status record where everything is False
+-}
+defaultStatus : Status
+defaultStatus =
+  { completed = False
+  , valueChanged = False
+  , selectionChanged = False
+  }

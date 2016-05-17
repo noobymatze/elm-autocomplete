@@ -1,18 +1,17 @@
-module Main (..) where
+module Main exposing (..)
 
-import Autocomplete.Simple exposing (Autocomplete, init, update, view)
-import StartApp.Simple
-import Html
+import Autocomplete exposing (Autocomplete, init, update, view)
+import Html.App as Html
 
 
-simpleUpdate : Autocomplete.Simple.Action -> Autocomplete -> Autocomplete
+simpleUpdate : Autocomplete.Msg -> Autocomplete -> Autocomplete
 simpleUpdate action autocomplete =
   fst (update action autocomplete)
 
 
-main : Signal Html.Html
+main : Program Never
 main =
-  StartApp.Simple.start
+  Html.beginnerProgram
     { model = init [ "elm", "makes", "coding", "life", "easy" ]
     , update = simpleUpdate
     , view = view
