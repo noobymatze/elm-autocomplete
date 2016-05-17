@@ -36,16 +36,16 @@ getClasses view =
       [ ( "autocomplete-input", True ) ]
 
 
-main : Signal Html.Html
+main : Program Never
 main =
   let
     config =
       Autocomplete.Config.defaultConfig
         |> Autocomplete.Config.setClassesFn getClasses
   in
-    StartApp.Simple.start
+    Html.beginnerProgram
       { model = initWithConfig testData config
-      , update = update
+      , update = (\act model -> fst (update act model))
       , view = view
       }
 ```

@@ -13,11 +13,20 @@ This selection is modified by keyboard arrow input, mouse clicks, and API consum
 Check out how easy it is to plug into a simple program:
 ```
 main =
-  Html.beginnerProgram
-    { model = Autocomplete.init [ "elm", "makes", "coding", "life", "easy" ]
-    , update = Autocomplete.update
-    , view = Autocomplete.view
-    }
+  let
+    updateAutocomplete msg autocomplete =
+      let
+        ( updatedAutocomplete, status ) = Autocomplete.update msg autocomplete
+        -- status communicates extra information the parent on every update
+        -- e.g. when the selection changes, the value changes, or the user has triggered a completion
+      in
+        updatedAutocomplete
+  in
+    Html.beginnerProgram
+      { model = Autocomplete.init [ "elm", "makes", "coding", "life", "easy" ]
+      , update = updateAutocomplete
+      , view = Autocomplete.view
+      }
 ```
 
 # Definition

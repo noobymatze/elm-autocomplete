@@ -5,7 +5,6 @@ import Autocomplete exposing (initWithConfig, update, view)
 import Autocomplete.Styling as Styling
 import Html.App as Html
 
-
 testData : List String
 testData =
   [ "elm"
@@ -14,7 +13,6 @@ testData =
   , "life"
   , "easy"
   ]
-
 
 getClasses : Styling.View -> Styling.Classes
 getClasses view =
