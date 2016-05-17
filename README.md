@@ -22,15 +22,21 @@ main =
       }
 ```
 
-You can either keep with the Github mention style defaults:
+## Demos
+
+Github mention style defaults
 
 ![simple-autocomplete-elm](https://cloud.githubusercontent.com/assets/3099999/15311173/ec6c0bfa-1bac-11e6-85e1-b19f30bcdcfe.gif)
 
-
-Or craft your own styles:
+Custom styles via CSS classnames. Maybe insert custom HTML for items
 
 ![typeahead-elm](https://cloud.githubusercontent.com/assets/3099999/15311152/aacb0746-1bac-11e6-9e2f-b4c30cc90345.gif)
 
-Or, control it within a textarea / contenteditable:
+Control autocomplete inside a textarea or contenteditable
 
 ![mentions](http://g.recordit.co/NIqgZm5zs6.gif)
+
+
+## Try it out
+
+Find these examples and more in the `./examples` folder.
