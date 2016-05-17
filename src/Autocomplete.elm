@@ -1,4 +1,4 @@
-module Autocomplete exposing (Autocomplete, Status, init, initWithConfig, Msg, update, view, getSelectedItem, getCurrentValue, showMenu, setValue, isComplete, setItems, setLoading, MenuNavigation(Previous, Next, Select), navigateMenu, defaultStatus)
+module Autocomplete exposing (Autocomplete, Status, init, initWithConfig, Msg, update, view, getSelectedItem, getCurrentValue, showMenu, setValue, setItems, setLoading, MenuNavigation(Previous, Next, Select), navigateMenu, defaultStatus)
 
 {-| A customizable Autocomplete component.
 
@@ -45,7 +45,15 @@ main =
 @docs getSelectedItem, getCurrentValue
 
 # Controlling Behavior
-@docs showMenu, setValue, isComplete, setItems, setLoading, MenuNavigation, navigateMenu
+
+If you want the autocomplete to be completely controlled, with no `input` field, use the Config
+module's `isValueControlled` function to designate that the API consumer will control the autocomplete.
+This is useful for mentions and other autocomplete examples inside textareas, contenteditable, etc.
+
+Defined below are functions to control:
+  the autocomplete's menu navigation, set its value, items, and whether its menu should be shown.
+
+@docs showMenu, setValue, setItems, setLoading, MenuNavigation, navigateMenu
 
 # Defaults
 @docs defaultStatus
@@ -337,13 +345,6 @@ showMenu bool auto =
 setValue : String -> Autocomplete -> Autocomplete
 setValue value auto =
   fst (updateAutocomplete (SetValue value) auto)
-
-
-{-| Returns true if Autocomplete matches an item exactly
--}
-isComplete : Autocomplete -> Bool
-isComplete (Autocomplete model) =
-  List.member model.value model.items
 
 
 {-| Sets the Autocomplete's list of items -}
