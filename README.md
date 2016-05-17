@@ -2,7 +2,8 @@
 
 An Autocomplete component in Elm because typing is hard.
 
-Code up a simple, static set of items for Autocomplete:
+Here's a simple example.
+
 ```elm
 main =
   let
