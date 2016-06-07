@@ -177,7 +177,7 @@ updateModel msg model =
       ( { model
           | items = items
           , matches =
-              List.filter (\item -> model.config.filterFn item model.value) model.items
+              List.filter (\item -> model.config.filterFn item model.value) items
                 |> List.sortWith model.config.compareFn
         }
       , defaultStatus
